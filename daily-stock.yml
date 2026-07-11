@@ -1,0 +1,37 @@
+name: 📊 每日选股自动运行
+on:
+  schedule:
+    - cron: '5 9 * * 1-5'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  stock-screen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 安装依赖
+        run: |
+          pip install --upgrade pip
+          pip install requests pandas numpy scikit-learn pydash zzshare pywencai
+      - name: 运行选股
+        env:
+          ZZSHARE_TOKEN: ${{ secrets.ZZSHARE_TOKEN }}
+        run: python3 generate_dashboard.py
+      - name: 生成首页
+        run: |
+          LATEST=$(ls -t dashboard_*.html 2>/dev/null | head -1)
+          [ -n "$LATEST" ] && echo "<meta http-equiv='refresh' content='0; url=$LATEST'>" > index.html
+      - name: 提交结果
+        run: |
+          git config user.name "stock-bot"
+          git config user.email "bot@github.com"
+          git add -A
+          git commit -m "📊 $(date '+%Y-%m-%d')" || true
+          git push
