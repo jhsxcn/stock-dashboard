@@ -1,4 +1,4 @@
-name: 每日选股自动运行
+name: 📊 生成看板
 on:
   schedule:
     - cron: '5 9 * * 1-5'
@@ -6,32 +6,43 @@ on:
 permissions:
   contents: write
 jobs:
-  stock-screen:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - name: 安装依赖
+      - name: 创建占位HTML
         run: |
-          pip install --upgrade pip
-          pip install requests pandas numpy scikit-learn pydash zzshare pywencai
-      - name: 运行选股
-        env:
-          ZZSHARE_TOKEN: ${{ secrets.ZZSHARE_TOKEN }}
-        run: python3 generate_dashboard.py
-      - name: 生成首页
-        run: |
-          LATEST=$(ls -t dashboard_*.html 2>/dev/null | head -1)
-          [ -n "$LATEST" ] && echo "<meta http-equiv='refresh' content='0; url=$LATEST'>" > index.html
-      - name: 提交结果
+          mkdir -p _site
+          # 读取已有的强势股_*.csv 生成HTML（兼容Windows编码）
+          python3 -c "
+          import os, glob, json
+          from datetime import datetime
+          import pandas as pd
+          
+          # 查找最新的CSV
+          csvs = sorted(glob.glob('强势股_*.csv'))
+          if not csvs:
+              print('无数据')
+              open('dashboard.html','w').write('<h1>暂无数据，请等下次选股</h1>')
+          else:
+              df = pd.read_csv(csvs[-1], encoding='utf-8-sig')
+              d = csvs[-1].replace('强势股_','').replace('.csv','')
+              print(f'读取: {csvs[-1]}, 行数: {len(df)}')
+              print(df.head())
+              # 写一个简单HTML
+              html = '<h1>📊 选股看板 - ' + d + '</h1><table border=1>' + \
+                  '<tr><th>代码</th><th>名称</th><th>动量</th></tr>' + \
+                  ''.join('<tr><td>'+str(r['代码'])+'</td><td>'+str(r['名称'])+'</td><td>'+str(r['动量评分'])+'</td></tr>' for _,r in df.iterrows()) + \
+                  '</table>'
+              open('dashboard.html','w',encoding='utf-8').write(html)
+              print('HTML生成完成')
+          "
+      - name: 复制到根
+        run: cp dashboard.html index.html 2>/dev/null || echo "无HTML"
+      - name: 提交
         run: |
           git config user.name "stock-bot"
           git config user.email "bot@github.com"
           git add -A
-          git commit -m "每日选股" || true
+          git commit -m "📊 $(date '+%Y-%m-%d')" || true
           git push
