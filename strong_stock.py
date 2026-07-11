@@ -148,7 +148,8 @@ def run_strong_stock_screen(date_str=None, top_n=10, n_days=25, positive_only=Fa
             '比值': float(rd.get(code, 0) or 0),
             '成交额': float(vd.get(code, 0) or 0),
             '流通市值': float(md.get(code, 0) or 0),
-            '比值排名': int(vol_rank.get(code, 0)),
+            '比值排名': int('比值排名': int(vol_rank.get(code, 0)),
+),
             '热度': float(hd.get(code, 0) or 0),
             '热度排名': str(hr.get(code, '')),
         })
