@@ -1,0 +1,5 @@
+*.html
+*.json
+tdx_blocks/
+__pycache__/
+*.pyc
