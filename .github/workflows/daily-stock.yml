@@ -1,4 +1,4 @@
-name: 📊 生成看板
+name: 📊 仅提交
 on:
   schedule:
     - cron: '5 9 * * 1-5'
@@ -6,40 +6,16 @@ on:
 permissions:
   contents: write
 jobs:
-  build:
+  commit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: 安装依赖
-        run: pip install pandas
-      - name: 生成HTML
-        run: |
-          python3 -c "
-          import pandas as pd
-          import glob
-          import os
-          csvs = sorted(glob.glob('强势股_*.csv'))
-          if not csvs:
-              html = '<html><body><h1>暂无数据</h1><p>请等下次选股后访问</p></body></html>'
-          else:
-              df = pd.read_csv(csvs[-1], encoding='utf-8-sig')
-              d = csvs[-1].replace('强势股_','').replace('.csv','')
-              print(f'读取: {csvs[-1]}, 行数: {len(df)}')
-              rows = ''
-              for _, r in df.iterrows():
-                  rows += '<tr><td>'+str(r.get('代码',''))+'</td><td>'+str(r.get('名称',''))+'</td><td>'+str(r.get('动量评分',0))+'</td><td>'+str(r.get('斜率',0))+'</td></tr>'
-              html = '<html><head><meta charset=utf-8><title>选股 '+d+'</title></head><body style="font-family:sans-serif;padding:20px"><h1>📊 强势股选股 - '+d+'</h1><p>共 '+str(len(df))+' 只</p><table border=1 cellpadding=6 style="border-collapse:collapse"><tr style="background:#0984e3;color:#fff"><th>代码</th><th>名称</th><th>动量</th><th>斜率</th></tr>'+rows+'</table></body></html>'
-              print('HTML生成完成')
-          with open('index.html','w',encoding='utf-8') as f:
-              f.write(html)
-          "
+      - name: 占位
+        run: echo "占位中 - 数据由电脑推送"
       - name: 提交
         run: |
-          git config user.name "stock-bot"
-          git config user.email "bot@github.com"
-          git add -A
-          git commit -m "📊 $(date '+%Y-%m-%d')" || true
-          git push
+          git config user.name "bot"
+          git config user.email "bot@x.com"
+          git add -A || true
+          git commit -m "auto" --allow-empty || true
+          git push || true
