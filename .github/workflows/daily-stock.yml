@@ -1,4 +1,4 @@
-name: 📊 仅提交
+name: 选股 + 部署
 on:
   schedule:
     - cron: '5 9 * * 1-5'
@@ -6,16 +6,19 @@ on:
 permissions:
   contents: write
 jobs:
-  commit:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: 占位
-        run: echo "占位中 - 数据由电脑推送"
-      - name: 提交
+      - name: 跑选股
         run: |
-          git config user.name "bot"
-          git config user.email "bot@x.com"
-          git add -A || true
-          git commit -m "auto" --allow-empty || true
-          git push || true
+          echo "选股由热铁盒云函数运行"
+          echo "此处只触发热铁盒部署"
+      - name: 通知热铁盒部署
+        env:
+          RTH_KEY: ${{ secrets.RTH_API_KEY }}
+        run: |
+          curl -X POST "https://api.retiehe.com/v1/deploy" \
+            -H "Authorization: Bearer $RTH_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"project":"stock-dashboard"}'
