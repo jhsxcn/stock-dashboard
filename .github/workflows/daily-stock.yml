@@ -1,24 +1,25 @@
-name: 选股 + 部署
+name: 选股
 on:
   schedule:
     - cron: '5 9 * * 1-5'
   workflow_dispatch:
-permissions:
-  contents: write
 jobs:
-  build:
+  run:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: 跑选股
-        run: |
-          echo "选股由热铁盒云函数运行"
-          echo "此处只触发热铁盒部署"
-      - name: 通知热铁盒部署
-        env:
-          RTH_KEY: ${{ secrets.RTH_API_KEY }}
-        run: |
-          curl -X POST "https://api.retiehe.com/v1/deploy" \
-            -H "Authorization: Bearer $RTH_KEY" \
-            -H "Content-Type: application/json" \
-            -d '{"project":"stock-dashboard"}'
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - run: |
+          pip install requests pandas numpy scikit-learn pydash zzshare pywencai
+      - run: python3 generate_dashboard.py
+        env: {ZZSHARE_TOKEN: ${{ secrets.ZZSHARE_TOKEN }}}
+      - run: |
+          LATEST=$(ls -t dashboard_*.html 2>/dev/null | head -1)
+          [ -n "$LATEST" ] && cp "$LATEST" index.html
+          git config user.name "bot"
+          git config user.email "bot@x.com"
+          git add -A
+          git commit -m "📊 $(date '+%Y-%m-%d')" && git push || true
