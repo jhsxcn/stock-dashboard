@@ -1,24 +1,18 @@
-concurrency: name: 选股
+name: 选股
 on:
   schedule:
     - cron: '5 9 * * 1-5'
-  workflow_dispatch:
 jobs:
-  run:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: {python-version: '3.11'}
-      - uses: actions/setup-node@v4
-        with: {node-version: '20'}
-      - run: pip install -r requirements.txt
-      - run: python3 generate_dashboard.py
-        env: {ZZSHARE_TOKEN: ${{ secrets.ZZSHARE_TOKEN }}}
-      - run: |
-          LATEST=$(ls -t dashboard_*.html 2>/dev/null | head -1)
-          [ -n "$LATEST" ] && cp "$LATEST" index.html
+      - name: 占位
+        run: echo '<h1>选股数据由电脑推送</h1>' > index.html
+      - name: 提交
+        run: |
           git config user.name "bot"
           git config user.email "bot@x.com"
           git add -A
-          git commit -m "📊 $(date '+%Y-%m-%d')" && git push || true
+          git commit -m "占位" || true
+          git push || true
