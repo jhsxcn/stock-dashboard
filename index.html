@@ -11,18 +11,24 @@
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
          background:var(--bg); color:var(--text); padding:0 0 40px; }
+  
+  /* Header */
   .header { background:var(--header-bg); color:var(--header-text); padding:16px 20px;
             position:sticky; top:0; z-index:100; box-shadow:0 2px 8px rgba(0,0,0,0.15); }
   .header-top { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
   .header h1 { font-size:20px; font-weight:600; }
   .header .sub { font-size:12px; opacity:0.7; margin-top:2px; }
   .header-controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  
+  /* Buttons */
   .btn { display:inline-flex; align-items:center; gap:4px; padding:8px 16px; border:none; border-radius:8px;
          font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; }
   .btn-primary { background:var(--accent); color:#fff; }
   .btn-primary:hover { opacity:0.85; }
   .btn-outline { background:transparent; color:var(--header-text); border:1px solid rgba(255,255,255,0.3); }
   .btn-outline:hover { border-color:var(--accent); }
+  
+  /* Toggle switch */
   .toggle-wrap { display:flex; align-items:center; gap:8px; font-size:13px; }
   .toggle { position:relative; width:44px; height:24px; background:rgba(255,255,255,0.2); border-radius:12px;
             cursor:pointer; transition:0.3s; }
@@ -30,7 +36,11 @@
   .toggle::after { content:''; position:absolute; width:20px; height:20px; border-radius:50%;
                    background:#fff; top:2px; left:2px; transition:0.3s; }
   .toggle.active::after { left:22px; }
+  
+  /* Main */
   .container { max-width:1000px; margin:0 auto; padding:16px; }
+  
+  /* Cards */
   .card { background:var(--card); border-radius:12px; box-shadow:0 1px 4px rgba(0,0,0,0.06);
           margin-bottom:16px; overflow:hidden; }
   .card-header { padding:14px 16px; font-size:15px; font-weight:600;
@@ -39,6 +49,8 @@
   .card-header .badge { font-size:11px; padding:2px 10px; border-radius:10px; font-weight:500; }
   .badge-blue { background:#dfe6e9; color:#636e72; }
   .badge-green { background:#00b89420; color:#00b894; }
+  
+  /* Table */
   .table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
   table { width:100%; border-collapse:collapse; font-size:13px; white-space:nowrap; }
   th { background:#f8f9fa; padding:10px 8px; text-align:left; font-weight:600; 
@@ -56,30 +68,61 @@
   .rank-2 { background:#c0c0c030; color:#708090; }
   .rank-3 { background:#cd7f3230; color:#8b4513; }
   .star { color:#ffd700; font-size:14px; }
+  
+  /* Status */
   .empty-state { padding:30px; text-align:center; color:#b2bec3; font-size:14px; }
+  
+  /* Info bar */
   .info-bar { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
   .info-item { background:var(--card); border-radius:10px; padding:12px 16px; flex:1; min-width:120px;
                text-align:center; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
   .info-item .val { font-size:22px; font-weight:700; }
   .info-item .lbl { font-size:11px; color:#636e72; margin-top:2px; }
+  
+  /* Toolbar */
+  .toolbar { display:flex; align-items:center; gap:6px; margin-bottom:12px;
+             background:var(--card); border-radius:8px; padding:8px 14px;
+             box-shadow:0 1px 3px rgba(0,0,0,0.04); flex-wrap:wrap; }
+  .btn-sm { display:inline-flex; align-items:center; gap:3px; padding:5px 12px; border:none; border-radius:6px;
+            font-size:12px; font-weight:500; cursor:pointer; transition:all 0.2s;
+            background:var(--accent); color:#fff; opacity:0.9; }
+  .btn-sm:hover { opacity:1; }
+  
+  /* Tabs */
   .tabs { display:flex; gap:4px; margin-bottom:16px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
   .tab { padding:10px 18px; border-radius:8px 8px 0 0; font-size:13px; font-weight:500; cursor:pointer;
          background:var(--card); border:1px solid var(--border); border-bottom:none; 
          white-space:nowrap; transition:0.2s; opacity:0.6; }
   .tab.active { opacity:1; background:var(--card); border-bottom:2px solid var(--accent); }
   .tab:hover { opacity:0.8; }
+  
+  /* Summary card */
+  .summary { padding:14px 16px; font-size:13px; line-height:1.9; }
+  .summary .title { font-size:15px; font-weight:600; margin-bottom:6px; }
+  .summary .tag { display:inline-block; padding:2px 10px; border-radius:8px; font-size:12px; margin:1px; }
+  .tag-up { background:#00b89420; color:#00b894; }
+  .tag-down { background:#d6303120; color:#d63031; }
+  .tag-flat { background:#636e7220; color:#636e72; }
+  .summary .row { margin-top:4px; }
+  .summary .b { font-weight:600; }
+  
+  /* Dark mode */
   .dark-mode { --bg:#1a1a2e; --card:#16213e; --text:#eaeaea; --border:#2a2a4a; 
                --tag-bg:#2a2a4a; --header-bg:#0f0f1a; }
   .dark-mode th { background:#1a1a2e; }
   .dark-mode .badge-blue { background:#2a2a4a; color:#b2bec3; }
+  .dark-mode .summary .tag { opacity:0.8; }
+  
   @media (max-width:600px) {
     .header h1 { font-size:17px; }
-    .btn { padding:6px 12px; font-size:12px; }
+    .btn { padding:5px 10px; font-size:12px; }
     table { font-size:12px; }
-    th, td { padding:7px 5px; }
-    .info-item { min-width:80px; padding:10px; }
-    .info-item .val { font-size:18px; }
-    .tab { padding:8px 12px; font-size:12px; }
+    th, td { padding:6px 4px; }
+    .info-item { min-width:70px; padding:8px; }
+    .info-item .val { font-size:16px; }
+    .tab { padding:6px 10px; font-size:12px; }
+    .toolbar { gap:4px; padding:6px 10px; }
+    .toolbar .btn { padding:4px 8px; font-size:11px; }
   }
 </style>
 </head>
@@ -95,39 +138,43 @@
         <span>🌙</span>
         <div class="toggle" id="darkToggle" onclick="toggleDark()"></div>
       </div>
-      <button class="btn btn-outline" onclick="location.reload()">🔄 刷新</button>
-      <button class="btn btn-outline" id="viewToggle" onclick="toggleView()">📄 源码</button>
     </div>
   </div>
 </div>
 
 <div class="container">
-  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;
-              font-size:12px;color:#636e72;margin-bottom:8px;
-              background:var(--card);border-radius:8px;padding:8px 14px;
-              box-shadow:0 1px 3px rgba(0,0,0,0.04)">
-    <span>📅 数据日期: <strong id="dateDisplay">—</strong></span>
-    <span>⏱ 生成时间: <span id="genTime">—</span></span>
-    <span id="dataSourceWrap">
-      <span id="dataSourceIcon">📦</span>
-      <span id="dataSource">嵌入数据</span>
-    </span>
+  <!-- 工具栏：刷新 + 日期状态 -->
+  <div class="toolbar">
+    <button class="btn btn-sm" onclick="location.reload()">🔄 刷新</button>
+    <span style="flex:1"></span>
+    <span style="font-size:11px;color:#636e72;white-space:nowrap">📅 <span id="dateDisplay2">—</span></span>
+    <span style="font-size:11px;color:#636e72;white-space:nowrap">📐 <span id="periodLabel">25日</span></span>
   </div>
+  
+  <!-- 总控开关 -->
   <div class="info-bar" id="infoBar"></div>
+  
+  <!-- Tab切换 -->
   <div class="tabs" id="tabBar"></div>
+  
+  <!-- 内容区 -->
   <div id="contentArea"></div>
 </div>
 
 <script>
-var SCREEN_DATA_EMBED = {"all": {"label": "全部强势股TOP10", "data": [{"代码": "002185.SZ", "名称": "华天科技", "比值": 31.6401, "成交额": 21083239146.75, "流通市值": 66634652722.32, "比值排名": "23/5536", "热度": 3261903.5, "热度排名": 1, "比值_norm": 0.3070027705503151, "热度_norm": 1.0, "成交额_norm": 0.3070027705503151, "综合评分": 0.6535, "斜率": -0.005372, "R²": 0.1775, "动量评分": -9.54, "动量_norm": 0.4333818830025435, "总分": 1.7404}, {"代码": "300164.SZ", "名称": "通源石油", "比值": 45.9638, "成交额": 2730225897.25, "流通市值": 5939951935.96, "比值排名": "5/5536", "热度": 673895.0, "热度排名": 29, "比值_norm": 0.6622805820884046, "热度_norm": 0.1170991206499875, "成交额_norm": 0.6622805820884046, "综合评分": 0.3897, "斜率": 0.019038, "R²": 0.8051, "动量评分": 153.29, "动量_norm": 0.7873524488598074, "总分": 1.5667}, {"代码": "003020.SZ", "名称": "立方制药", "比值": 46.5293, "成交额": 1006677408.79, "流通市值": 2163535275.2000003, "比值排名": "3/5536", "热度": 357348.5, "热度排名": 80, "比值_norm": 0.6763069581242604, "热度_norm": 0.0091090645102304, "成交额_norm": 0.6763069581242604, "综合评分": 0.3427, "斜率": 0.020678, "R²": 0.8691, "动量评分": 179.72, "动量_norm": 0.8448077215712703, "总分": 1.5302}, {"代码": "301583.SZ", "名称": "托伦斯", "比值": 59.5796, "成交额": 3288638561.59, "流通市值": 5519740708.19, "比值排名": "1/5536", "热度": 435104.0, "热度排名": 62, "比值_norm": 1.0, "热度_norm": 0.0356354068017259, "成交额_norm": 1.0, "综合评分": 0.5178, "斜率": 0.0, "R²": 0.0, "动量评分": 0.0, "动量_norm": 0.4541205625964653, "总分": 1.4898}, {"代码": "603538.SH", "名称": "美诺华", "比值": 38.6387, "成交额": 3515050759.67, "流通市值": 9097238272.400002, "比值排名": "10/5536", "热度": 830802.5, "热度排名": 19, "比值_norm": 0.4805925058722272, "热度_norm": 0.1706282221682446, "成交额_norm": 0.4805925058722272, "综合评分": 0.3256, "斜率": 0.017672, "R²": 0.8667, "动量评分": 153.16, "动量_norm": 0.787069846307689, "总分": 1.4383}, {"代码": "002396.SZ", "名称": "星网锐捷", "比值": 32.5557, "成交额": 5185131546.01, "流通市值": 15926960482.02, "比值排名": "20/5536", "热度": 643450.5, "热度排名": 32, "比值_norm": 0.3297128499463004, "热度_norm": 0.1067129585406392, "成交额_norm": 0.3297128499463004, "综合评分": 0.2182, "斜率": 0.031184, "R²": 0.8053, "动量评分": 251.11, "动量_norm": 1.0, "总分": 1.4364}, {"代码": "603137.SH", "名称": "恒尚节能", "比值": 41.984, "成交额": 1131431715.66, "流通市值": 2694910421.58, "比值排名": "8/5536", "热度": 1017481.5, "热度排名": 13, "比值_norm": 0.5635676354084763, "热度_norm": 0.2343138913830794, "成交额_norm": 0.5635676354084763, "综合评分": 0.3989, "斜率": 0.004234, "R²": 0.2837, "动量评分": 12.01, "动量_norm": 0.4802286906806374, "总分": 1.2781}, {"代码": "000938.SZ", "名称": "紫光股份", "比值": 21.995, "成交额": 16749070142.3, "流通市值": 76149287741.2, "比值排名": "61/5536", "热度": 1530141.0, "热度排名": 7, "比值_norm": 0.0677705875203699, "热度_norm": 0.40920803232471, "成交额_norm": 0.0677705875203699, "综合评分": 0.2385, "斜率": 0.009353, "R²": 0.7656, "动量评分": 71.6, "动量_norm": 0.6097693528401557, "总分": 1.0867}, {"代码": "600488.SH", "名称": "津药药业", "比值": 36.7614, "成交额": 1139641908.81, "流通市值": 3100101994.57, "比值排名": "14/5536", "热度": 359209.0, "热度排名": 79, "比值_norm": 0.4340289059922762, "热度_norm": 0.0097437753645536, "成交额_norm": 0.4340289059922762, "综合评分": 0.2219, "斜率": 0.012793, "R²": 0.6049, "动量评分": 77.39, "动量_norm": 0.6223560357383535, "总分": 1.0661}, {"代码": "600584.SH", "名称": "长电科技", "比值": 19.2627, "成交额": 27424670380.65, "流通市值": 142372152249.6, "比值排名": "97/5536", "热度": 2177935.0, "热度排名": 2, "比值_norm": 0.0, "热度_norm": 0.6302034008629748, "成交额_norm": 0.0, "综合评分": 0.3151, "斜率": -0.005654, "R²": 0.177, "动量评分": -10.01, "动量_norm": 0.432360166083346, "总分": 1.0626}], "count": 10}, "up": {"label": "上涨趋势股", "data": [{"代码": "300164.SZ", "名称": "通源石油", "比值": 45.9638, "成交额": 2730225897.25, "流通市值": 5939951935.96, "比值排名": "5/5536", "热度": 673895.0, "热度排名": 29, "比值_norm": 0.6622805820884046, "热度_norm": 0.1170991206499875, "成交额_norm": 0.6622805820884046, "综合评分": 0.3897, "斜率": 0.019038, "R²": 0.8051, "动量评分": 153.29, "动量_norm": 0.7873524488598074, "总分": 1.5667}, {"代码": "003020.SZ", "名称": "立方制药", "比值": 46.5293, "成交额": 1006677408.79, "流通市值": 2163535275.2000003, "比值排名": "3/5536", "热度": 357348.5, "热度排名": 80, "比值_norm": 0.6763069581242604, "热度_norm": 0.0091090645102304, "成交额_norm": 0.6763069581242604, "综合评分": 0.3427, "斜率": 0.020678, "R²": 0.8691, "动量评分": 179.72, "动量_norm": 0.8448077215712703, "总分": 1.5302}, {"代码": "603538.SH", "名称": "美诺华", "比值": 38.6387, "成交额": 3515050759.67, "流通市值": 9097238272.400002, "比值排名": "10/5536", "热度": 830802.5, "热度排名": 19, "比值_norm": 0.4805925058722272, "热度_norm": 0.1706282221682446, "成交额_norm": 0.4805925058722272, "综合评分": 0.3256, "斜率": 0.017672, "R²": 0.8667, "动量评分": 153.16, "动量_norm": 0.787069846307689, "总分": 1.4383}, {"代码": "002396.SZ", "名称": "星网锐捷", "比值": 32.5557, "成交额": 5185131546.01, "流通市值": 15926960482.02, "比值排名": "20/5536", "热度": 643450.5, "热度排名": 32, "比值_norm": 0.3297128499463004, "热度_norm": 0.1067129585406392, "成交额_norm": 0.3297128499463004, "综合评分": 0.2182, "斜率": 0.031184, "R²": 0.8053, "动量评分": 251.11, "动量_norm": 1.0, "总分": 1.4364}, {"代码": "603137.SH", "名称": "恒尚节能", "比值": 41.984, "成交额": 1131431715.66, "流通市值": 2694910421.58, "比值排名": "8/5536", "热度": 1017481.5, "热度排名": 13, "比值_norm": 0.5635676354084763, "热度_norm": 0.2343138913830794, "成交额_norm": 0.5635676354084763, "综合评分": 0.3989, "斜率": 0.004234, "R²": 0.2837, "动量评分": 12.01, "动量_norm": 0.4802286906806374, "总分": 1.2781}, {"代码": "000938.SZ", "名称": "紫光股份", "比值": 21.995, "成交额": 16749070142.3, "流通市值": 76149287741.2, "比值排名": "61/5536", "热度": 1530141.0, "热度排名": 7, "比值_norm": 0.0677705875203699, "热度_norm": 0.40920803232471, "成交额_norm": 0.0677705875203699, "综合评分": 0.2385, "斜率": 0.009353, "R²": 0.7656, "动量评分": 71.6, "动量_norm": 0.6097693528401557, "总分": 1.0867}, {"代码": "600488.SH", "名称": "津药药业", "比值": 36.7614, "成交额": 1139641908.81, "流通市值": 3100101994.57, "比值排名": "14/5536", "热度": 359209.0, "热度排名": 79, "比值_norm": 0.4340289059922762, "热度_norm": 0.0097437753645536, "成交额_norm": 0.4340289059922762, "综合评分": 0.2219, "斜率": 0.012793, "R²": 0.6049, "动量评分": 77.39, "动量_norm": 0.6223560357383535, "总分": 1.0661}], "count": 7}, "strict": {"label": "严格模式", "data": [{"代码": "300164.SZ", "名称": "通源石油", "比值": 45.9638, "成交额": 2730225897.25, "流通市值": 5939951935.96, "比值排名": "5/5536", "热度": 673895.0, "热度排名": 29, "比值_norm": 0.6622805820884046, "热度_norm": 0.1170991206499875, "成交额_norm": 0.6622805820884046, "综合评分": 0.3897, "斜率": 0.019038, "R²": 0.8051, "动量评分": 153.29, "动量_norm": 0.7873524488598074, "总分": 1.5667}, {"代码": "003020.SZ", "名称": "立方制药", "比值": 46.5293, "成交额": 1006677408.79, "流通市值": 2163535275.2000003, "比值排名": "3/5536", "热度": 357348.5, "热度排名": 80, "比值_norm": 0.6763069581242604, "热度_norm": 0.0091090645102304, "成交额_norm": 0.6763069581242604, "综合评分": 0.3427, "斜率": 0.020678, "R²": 0.8691, "动量评分": 179.72, "动量_norm": 0.8448077215712703, "总分": 1.5302}, {"代码": "603538.SH", "名称": "美诺华", "比值": 38.6387, "成交额": 3515050759.67, "流通市值": 9097238272.400002, "比值排名": "10/5536", "热度": 830802.5, "热度排名": 19, "比值_norm": 0.4805925058722272, "热度_norm": 0.1706282221682446, "成交额_norm": 0.4805925058722272, "综合评分": 0.3256, "斜率": 0.017672, "R²": 0.8667, "动量评分": 153.16, "动量_norm": 0.787069846307689, "总分": 1.4383}, {"代码": "002396.SZ", "名称": "星网锐捷", "比值": 32.5557, "成交额": 5185131546.01, "流通市值": 15926960482.02, "比值排名": "20/5536", "热度": 643450.5, "热度排名": 32, "比值_norm": 0.3297128499463004, "热度_norm": 0.1067129585406392, "成交额_norm": 0.3297128499463004, "综合评分": 0.2182, "斜率": 0.031184, "R²": 0.8053, "动量评分": 251.11, "动量_norm": 1.0, "总分": 1.4364}, {"代码": "000938.SZ", "名称": "紫光股份", "比值": 21.995, "成交额": 16749070142.3, "流通市值": 76149287741.2, "比值排名": "61/5536", "热度": 1530141.0, "热度排名": 7, "比值_norm": 0.0677705875203699, "热度_norm": 0.40920803232471, "成交额_norm": 0.0677705875203699, "综合评分": 0.2385, "斜率": 0.009353, "R²": 0.7656, "动量评分": 71.6, "动量_norm": 0.6097693528401557, "总分": 1.0867}], "count": 5}, "loose": {"label": "宽松模式", "data": [{"代码": "300164.SZ", "名称": "通源石油", "比值": 45.9638, "成交额": 2730225897.25, "流通市值": 5939951935.96, "比值排名": "5/5536", "热度": 673895.0, "热度排名": 29, "比值_norm": 0.6622805820884046, "热度_norm": 0.1170991206499875, "成交额_norm": 0.6622805820884046, "综合评分": 0.3897, "斜率": 0.019038, "R²": 0.8051, "动量评分": 153.29, "动量_norm": 0.7873524488598074, "总分": 1.5667}, {"代码": "003020.SZ", "名称": "立方制药", "比值": 46.5293, "成交额": 1006677408.79, "流通市值": 2163535275.2000003, "比值排名": "3/5536", "热度": 357348.5, "热度排名": 80, "比值_norm": 0.6763069581242604, "热度_norm": 0.0091090645102304, "成交额_norm": 0.6763069581242604, "综合评分": 0.3427, "斜率": 0.020678, "R²": 0.8691, "动量评分": 179.72, "动量_norm": 0.8448077215712703, "总分": 1.5302}, {"代码": "603538.SH", "名称": "美诺华", "比值": 38.6387, "成交额": 3515050759.67, "流通市值": 9097238272.400002, "比值排名": "10/5536", "热度": 830802.5, "热度排名": 19, "比值_norm": 0.4805925058722272, "热度_norm": 0.1706282221682446, "成交额_norm": 0.4805925058722272, "综合评分": 0.3256, "斜率": 0.017672, "R²": 0.8667, "动量评分": 153.16, "动量_norm": 0.787069846307689, "总分": 1.4383}, {"代码": "002396.SZ", "名称": "星网锐捷", "比值": 32.5557, "成交额": 5185131546.01, "流通市值": 15926960482.02, "比值排名": "20/5536", "热度": 643450.5, "热度排名": 32, "比值_norm": 0.3297128499463004, "热度_norm": 0.1067129585406392, "成交额_norm": 0.3297128499463004, "综合评分": 0.2182, "斜率": 0.031184, "R²": 0.8053, "动量评分": 251.11, "动量_norm": 1.0, "总分": 1.4364}, {"代码": "000938.SZ", "名称": "紫光股份", "比值": 21.995, "成交额": 16749070142.3, "流通市值": 76149287741.2, "比值排名": "61/5536", "热度": 1530141.0, "热度排名": 7, "比值_norm": 0.0677705875203699, "热度_norm": 0.40920803232471, "成交额_norm": 0.0677705875203699, "综合评分": 0.2385, "斜率": 0.009353, "R²": 0.7656, "动量评分": 71.6, "动量_norm": 0.6097693528401557, "总分": 1.0867}, {"代码": "600488.SH", "名称": "津药药业", "比值": 36.7614, "成交额": 1139641908.81, "流通市值": 3100101994.57, "比值排名": "14/5536", "热度": 359209.0, "热度排名": 79, "比值_norm": 0.4340289059922762, "热度_norm": 0.0097437753645536, "成交额_norm": 0.4340289059922762, "综合评分": 0.2219, "斜率": 0.012793, "R²": 0.6049, "动量评分": 77.39, "动量_norm": 0.6223560357383535, "总分": 1.0661}], "count": 6}};
+// ==================== 数据（由Python写入，同时尝试外挂JSON自动更新） ====================
+var SCREEN_DATA_EMBED = {"all": {"label": "全部强势股TOP10", "data": [{"代码": "000779.SZ", "名称": "甘咨询", "比值": 2.707440269705395, "成交额": 1187310260.0, "流通市值": 3103579484.66, "主力净流入": 84027560.77000001, "比值排名": "7/5536", "热度": 60949.5, "热度排名": "17", "比值_norm": 0.98561289600227, "热度_norm": 0.2001926718994603, "成交额_norm": 0.98561289600227, "综合评分": 0.5929, "斜率": 0.022466, "R²": 0.787, "动量评分": 176.8, "动量_norm": 0.413584585555017, "总分": 1.5994}, {"代码": "001309.SZ", "名称": "德明利", "比值": 1.0225494006912954, "成交额": 1130811700.0, "流通市值": 77913912566.12, "主力净流入": 796708246.0, "比值排名": "51/5536", "热度": 207069.5, "热度排名": "1", "比值_norm": 0.0999066995360828, "热度_norm": 1.0, "成交额_norm": 0.0999066995360828, "综合评分": 0.55, "斜率": -0.000589, "R²": 0.0005, "动量评分": -0.0, "动量_norm": 0.19933349491032476, "总分": 1.2992}, {"代码": "600881.SH", "名称": "亚泰集团", "比值": 2.734809052100785, "成交额": 551282057.0, "流通市值": 5089060440.0, "主力净流入": 139176085.58, "比值排名": "6/5536", "热度": 35639.0, "热度排名": "54", "比值_norm": 1.0, "热度_norm": 0.06165227101054222, "成交额_norm": 1.0, "综合评分": 0.5308, "斜率": 0.000165, "R²": 0.0005, "动量评分": 0.0, "动量_norm": 0.19933349491032476, "总分": 1.261}, {"代码": "603137.SH", "名称": "恒尚节能", "比值": 0.8872917930229677, "成交额": 66626190.0, "流通市值": 2401858685.9, "主力净流入": 21311495.0, "比值排名": "67/5536", "热度": 31500.5, "热度排名": "66", "比值_norm": 0.028805061184199822, "热度_norm": 0.03899963874018851, "成交额_norm": 0.028805061184199822, "综合评分": 0.0339, "斜率": 0.080297, "R²": 0.8228, "动量评分": 660.71, "动量_norm": 1.0, "总分": 1.0678}, {"代码": "603698.SH", "名称": "航天工程", "比值": 1.9049895182797068, "成交额": 927643430.0, "流通市值": 5600220990.0, "主力净流入": 106683622.86000001, "比值排名": "16/5536", "热度": 67269.0, "热度排名": "15", "比值_norm": 0.5637840310191263, "热度_norm": 0.23478329884944224, "成交额_norm": 0.5637840310191263, "综合评分": 0.3993, "斜率": 0.003403, "R²": 0.0246, "动量评分": 0.84, "动量_norm": 0.20035142995637423, "总分": 0.9989}, {"代码": "600722.SH", "名称": "金牛化工", "比值": 2.127125861740866, "成交额": 410446552.0, "流通市值": 2550953642.47, "主力净流入": 54261994.65, "比值排名": "11/5536", "热度": 41167.5, "热度排名": "43", "比值_norm": 0.680555710112512, "热度_norm": 0.09191325385617481, "成交额_norm": 0.680555710112512, "综合评分": 0.3862, "斜率": -0.006685, "R²": 0.6382, "动量评分": -42.66, "动量_norm": 0.14763693650024237, "总分": 0.9201}, {"代码": "000722.SZ", "名称": "湖南发展", "比值": 1.924137540868269, "成交额": 730235196.0, "流通市值": 3111333398.91, "主力净流入": 59866333.95, "比值排名": "15/5536", "热度": 56288.0, "热度排名": "20", "比值_norm": 0.5738496813046478, "热度_norm": 0.17467732930473906, "成交额_norm": 0.5738496813046478, "综合评分": 0.3743, "斜率": -0.009819, "R²": 0.4693, "动量评分": -46.08, "动量_norm": 0.14349248666989822, "总分": 0.892}, {"代码": "600644.SH", "名称": "乐山电力", "比值": 1.7126548524908598, "成交额": 387549173.0, "流通市值": 2909109606.5, "主力净流入": 49823006.84, "比值排名": "19/5536", "热度": 29901.5, "热度排名": "73", "比值_norm": 0.4626783698648731, "热度_norm": 0.030247298761864102, "成交额_norm": 0.4626783698648731, "综合评分": 0.2465, "斜率": -0.007615, "R²": 0.5091, "动量评分": -38.77, "动量_norm": 0.15235094522539988, "总分": 0.6453}, {"代码": "600310.SH", "名称": "广西能源", "比值": 1.4490857420549732, "成交额": 687441075.0, "流通市值": 3232585854.0, "主力净流入": 46842940.70999999, "比值排名": "28/5536", "热度": 24375.5, "热度排名": "97", "比值_norm": 0.3241264917561479, "热度_norm": 0.0, "成交额_norm": 0.3241264917561479, "综合评分": 0.1621, "斜率": -0.006013, "R²": 0.4306, "动量评分": -25.89, "动量_norm": 0.16795928259815804, "总分": 0.4921}, {"代码": "001896.SZ", "名称": "豫能控股", "比值": 1.429475595271661, "成交额": 2386962690.0, "流通市值": 8125845818.16, "主力净流入": 116156982.88000003, "比值排名": "29/5536", "热度": 30603.0, "热度排名": "68", "比值_norm": 0.313817914008466, "热度_norm": 0.03408705266730161, "成交额_norm": 0.313817914008466, "综合评分": 0.174, "斜率": -0.018145, "R²": 0.9065, "动量评分": -164.49, "动量_norm": 0.0, "总分": 0.3479}], "count": 10}, "up": {"label": "上涨趋势股", "data": [{"代码": "603137.SH", "名称": "恒尚节能", "比值": 0.8872917930229677, "成交额": 66626190.0, "流通市值": 2401858685.9, "主力净流入": 21311495.0, "比值排名": "67/5536", "热度": 31500.5, "热度排名": "66", "比值_norm": 0.028805061184199822, "热度_norm": 0.03899963874018851, "成交额_norm": 0.028805061184199822, "综合评分": 0.0339, "斜率": 0.080297, "R²": 0.8228, "动量评分": 660.71, "动量_norm": 1.0, "总分": 1.0678}, {"代码": "000779.SZ", "名称": "甘咨询", "比值": 2.707440269705395, "成交额": 1187310260.0, "流通市值": 3103579484.66, "主力净流入": 84027560.77000001, "比值排名": "7/5536", "热度": 60949.5, "热度排名": "17", "比值_norm": 0.98561289600227, "热度_norm": 0.2001926718994603, "成交额_norm": 0.98561289600227, "综合评分": 0.5929, "斜率": 0.022466, "R²": 0.787, "动量评分": 176.8, "动量_norm": 0.413584585555017, "总分": 1.5994}, {"代码": "603698.SH", "名称": "航天工程", "比值": 1.9049895182797068, "成交额": 927643430.0, "流通市值": 5600220990.0, "主力净流入": 106683622.86000001, "比值排名": "16/5536", "热度": 67269.0, "热度排名": "15", "比值_norm": 0.5637840310191263, "热度_norm": 0.23478329884944224, "成交额_norm": 0.5637840310191263, "综合评分": 0.3993, "斜率": 0.003403, "R²": 0.0246, "动量评分": 0.84, "动量_norm": 0.20035142995637423, "总分": 0.9989}], "count": 3}, "strict": {"label": "严格模式上涨趋势股", "data": [{"代码": "603137.SH", "名称": "恒尚节能", "比值": 0.8872917930229677, "成交额": 66626190.0, "流通市值": 2401858685.9, "主力净流入": 21311495.0, "比值排名": "67/5536", "热度": 31500.5, "热度排名": "66", "比值_norm": 0.028805061184199822, "热度_norm": 0.03899963874018851, "成交额_norm": 0.028805061184199822, "综合评分": 0.0339, "斜率": 0.080297, "R²": 0.8228, "动量评分": 660.71, "动量_norm": 1.0, "总分": 1.0678}, {"代码": "000779.SZ", "名称": "甘咨询", "比值": 2.707440269705395, "成交额": 1187310260.0, "流通市值": 3103579484.66, "主力净流入": 84027560.77000001, "比值排名": "7/5536", "热度": 60949.5, "热度排名": "17", "比值_norm": 0.98561289600227, "热度_norm": 0.2001926718994603, "成交额_norm": 0.98561289600227, "综合评分": 0.5929, "斜率": 0.022466, "R²": 0.787, "动量评分": 176.8, "动量_norm": 0.413584585555017, "总分": 1.5994}, {"代码": "603698.SH", "名称": "航天工程", "比值": 1.9049895182797068, "成交额": 927643430.0, "流通市值": 5600220990.0, "主力净流入": 106683622.86000001, "比值排名": "16/5536", "热度": 67269.0, "热度排名": "15", "比值_norm": 0.5637840310191263, "热度_norm": 0.23478329884944224, "成交额_norm": 0.5637840310191263, "综合评分": 0.3993, "斜率": 0.003403, "R²": 0.0246, "动量评分": 0.84, "动量_norm": 0.20035142995637423, "总分": 0.9989}], "count": 3}, "loose": {"label": "宽松模式上涨趋势股", "data": [{"代码": "603137.SH", "名称": "恒尚节能", "比值": 0.8872917930229677, "成交额": 66626190.0, "流通市值": 2401858685.9, "主力净流入": 21311495.0, "比值排名": "67/5536", "热度": 31500.5, "热度排名": "66", "比值_norm": 0.028805061184199822, "热度_norm": 0.03899963874018851, "成交额_norm": 0.028805061184199822, "综合评分": 0.0339, "斜率": 0.080297, "R²": 0.8228, "动量评分": 660.71, "动量_norm": 1.0, "总分": 1.0678}, {"代码": "000779.SZ", "名称": "甘咨询", "比值": 2.707440269705395, "成交额": 1187310260.0, "流通市值": 3103579484.66, "主力净流入": 84027560.77000001, "比值排名": "7/5536", "热度": 60949.5, "热度排名": "17", "比值_norm": 0.98561289600227, "热度_norm": 0.2001926718994603, "成交额_norm": 0.98561289600227, "综合评分": 0.5929, "斜率": 0.022466, "R²": 0.787, "动量评分": 176.8, "动量_norm": 0.413584585555017, "总分": 1.5994}, {"代码": "603698.SH", "名称": "航天工程", "比值": 1.9049895182797068, "成交额": 927643430.0, "流通市值": 5600220990.0, "主力净流入": 106683622.86000001, "比值排名": "16/5536", "热度": 67269.0, "热度排名": "15", "比值_norm": 0.5637840310191263, "热度_norm": 0.23478329884944224, "成交额_norm": 0.5637840310191263, "综合评分": 0.3993, "斜率": 0.003403, "R²": 0.0246, "动量评分": 0.84, "动量_norm": 0.20035142995637423, "总分": 0.9989}], "count": 3}};
 var SCREEN_DATA = SCREEN_DATA_EMBED;
-var DATE_STR = '2026-07-14';
-var GEN_TIME = '2026-07-15 07:19';
-document.getElementById('dateDisplay').textContent = DATE_STR;
-document.getElementById('genTime').textContent = GEN_TIME;
 
+var DATE_STR = '2026-07-18';
+var GEN_TIME = '2026-07-18 13:15';
+document.getElementById('dateDisplay').textContent = DATE_STR;
+var d2 = document.getElementById('dateDisplay2');
+if (d2) d2.textContent = DATE_STR;
+
+// ==================== 自动检测外部数据更新 ====================
 (function checkUpdate() {
-  var dataUrl = './dashboard_data.json';
+  var dataUrl = './dashboard_data_' + DATE_STR + '.json';
   var xhr = new XMLHttpRequest();
   xhr.open('GET', dataUrl + '?t=' + Date.now(), true);
   xhr.onload = function() {
@@ -136,29 +183,21 @@ document.getElementById('genTime').textContent = GEN_TIME;
         var fresh = JSON.parse(xhr.responseText);
         if (fresh && fresh.all) {
           SCREEN_DATA = fresh;
-          document.getElementById('dataSourceIcon').textContent = '✅';
-          document.getElementById('dataSource').textContent = '外部数据（最新）';
-          document.getElementById('dataSource').style.color = '#00b894';
-          document.getElementById('dataSourceWrap').style.background = '#00b89415';
-          document.getElementById('dataSourceWrap').style.borderRadius = '4px';
-          document.getElementById('dataSourceWrap').style.padding = '0 6px';
           renderInfoBar();
           renderContent();
         }
       } catch(e) {}
     }
   };
-  xhr.onerror = function() {
-    document.getElementById('dataSourceIcon').textContent = '📦';
-    document.getElementById('dataSource').textContent = '嵌入数据';
-    document.getElementById('dataSource').style.color = '#636e72';
-  };
+  xhr.onerror = function() {};
   xhr.send();
 })();
 
+// ==================== 渲染 ====================
 var TAB_KEYS = ['all', 'up', 'loose', 'strict'];
 var TAB_ICONS = {'all':'🏆','up':'📈','loose':'🔵','strict':'🔴'};
 var TAB_NAMES = {'all':'综合排名','up':'上涨趋势','loose':'宽松模式','strict':'严格模式'};
+
 var activeTab = 'all';
 
 function renderInfoBar() {
@@ -179,70 +218,125 @@ function renderTabs() {
 }
 
 function renderTable(data, key) {
-  if (!data || data.length === 0) return '<div class="empty-state">📭 暂无数据</div>';
-  var h = '<div class="table-wrap"><table><thead><tr><th>#</th><th>代码</th><th>名称</th>' +
-    '<th class="num">动量评分</th><th class="num">斜率</th><th class="num">R²</th>' +
-    '<th class="num">比值%</th><th class="num">比值排名</th><th class="num">热度排名</th></tr></thead><tbody>';
+  if (!data || data.length === 0) {
+    return '<div class="empty-state">📭 暂无数据</div>';
+  }
+  
+  var isUp = key !== 'all';
+  var h = '<div class="table-wrap"><table><thead><tr>' +
+          '<th>#</th><th>代码</th><th>名称</th>' +
+          '<th class="num">动量评分</th><th class="num">斜率</th><th class="num">R²</th>' +
+          '<th class="num">比值%</th>' +
+          '<th class="num">比值排名</th>' +
+          '<th class="num">热度排名</th></tr></thead><tbody>';
+  
   data.forEach(function(r, i) {
     var mom = parseFloat(r.动量评分) || 0;
     var slope = parseFloat(r.斜率) || 0;
     var r2 = parseFloat(r['R²']) || 0;
-    var ratio = r.比值 ? parseFloat(r.比值).toFixed(1) : '-';
-    var rc = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
-    var mc = mom > 0 ? 'pos' : 'neg';
-    var star = mom > 0 ? '<span class="star">⭐️</span>' : '';
-    var vr = r.比值排名 || r.成交额排名 || '';
-    var codeStr = r.代码 || '';
-    h += '<tr><td><span class="rank-badge '+rc+'">'+(i+1)+'</span></td>' +
-         '<td class="code">'+codeStr+'</td>' +
+    var ratio = r.比值 ? parseFloat(r.比值).toFixed(1) : (r.成交额 ? '-' : '-');
+    var rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
+    var momClass = mom > 0 ? 'pos' : 'neg';
+    var star = (mom > 0) ? '<span class="star">⭐️</span>' : '';
+    var volRank = r.比值排名 || r.成交额排名 || '';
+    
+    h += '<tr><td><span class="rank-badge '+rankClass+'">'+(i+1)+'</span></td>' +
+         '<td class="code">'+(r.代码||'')+'</td>' +
          '<td class="name">'+(r.名称||'')+star+'</td>' +
-         '<td class="num '+mc+'">'+(mom>0?'+':'')+mom.toFixed(2)+'</td>' +
+         '<td class="num '+momClass+'">'+(mom > 0 ? '+' : '')+mom.toFixed(2)+'</td>' +
          '<td class="num">'+slope.toFixed(4)+'</td>' +
          '<td class="num">'+r2.toFixed(3)+'</td>' +
          '<td class="num">'+ratio+'</td>' +
-         '<td class="num">'+vr+'</td>' +
+         '<td class="num">'+volRank+'</td>' +
          '<td class="num">'+(r.热度排名||'')+'</td></tr>';
   });
+  
   h += '</tbody></table></div>';
   return h;
 }
 
 function renderContent() {
   var area = document.getElementById('contentArea');
-  var d = SCREEN_DATA[activeTab] || {data:[], label:''};
-  var td = '';
-  if (activeTab === 'strict') td = '<div style="font-size:12px;color:#636e72;padding:0 16px 10px">斜率>0.008 且 R²>0.7</div>';
-  else if (activeTab === 'loose') td = '<div style="font-size:12px;color:#636e72;padding:0 16px 10px">斜率>0.003 且 R²>0.3</div>';
-  else if (activeTab === 'up') td = '<div style="font-size:12px;color:#636e72;padding:0 16px 10px">斜率>0 的上涨趋势股</div>';
-  area.innerHTML = '<div class="card"><div class="card-header"><span>'+TAB_ICONS[activeTab]+' '+d.label+'</span>' +
-    '<span class="badge badge-green">'+d.count+' 只</span></div>'+td+renderTable(d.data, activeTab)+'</div>';
-}
-
-function switchTab(key) { activeTab = key; renderTabs(); renderContent(); }
-function toggleDark() { document.body.classList.toggle('dark-mode'); document.getElementById('darkToggle').classList.toggle('active'); }
-
-var _viewMode = 'render';
-
-function toggleView() {
-  var btn = document.getElementById('viewToggle');
-  var area = document.getElementById('contentArea');
-  var tabs = document.getElementById('tabBar');
-  var info = document.getElementById('infoBar');
-  if (_viewMode === 'render') {
-    _viewMode = 'source'; btn.textContent = '🎨 渲染';
-    tabs.style.display = 'none'; info.style.display = 'none';
-    var js = JSON.stringify(SCREEN_DATA, null, 2);
-    area.innerHTML = '<div class="card"><div class="card-header">📄 原始数据 (JSON)</div>' +
-      '<div style="padding:16px;overflow:auto;max-height:70vh;font-size:12px;font-family:monospace;white-space:pre;line-height:1.5">' +
-      js.replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>') + '</div></div>';
-  } else {
-    _viewMode = 'render'; btn.textContent = '📄 源码';
-    tabs.style.display = 'flex'; info.style.display = 'flex';
-    renderContent();
+  var data = SCREEN_DATA[activeTab] || {data:[], label:''};
+  var isUp = activeTab !== 'all';
+  
+  var titleDesc = '';
+  if (activeTab === 'strict') titleDesc = '<div style="font-size:12px;color:#636e72;padding:0 16px 10px">斜率>0.008 且 R²>0.7</div>';
+  else if (activeTab === 'loose') titleDesc = '<div style="font-size:12px;color:#636e72;padding:0 16px 10px">斜率>0.003 且 R²>0.3</div>';
+  else if (activeTab === 'up') titleDesc = '<div style="font-size:12px;color:#636e72;padding:0 16px 10px">斜率>0 的上涨趋势股</div>';
+  
+  var html = '<div class="card"><div class="card-header">' +
+             '<span>'+TAB_ICONS[activeTab]+' '+data.label+'</span>' +
+             '<span class="badge badge-green">'+data.count+' 只</span></div>' +
+             titleDesc +
+             renderTable(data.data, activeTab) + '</div>';
+  
+  // 综合排名Tab底部显示市场总评
+  if (activeTab === 'all') {
+    html += renderSummary();
   }
+  
+  area.innerHTML = html;
 }
 
-renderInfoBar(); renderTabs(); renderContent();
+function renderSummary() {
+  var allData = SCREEN_DATA.all ? SCREEN_DATA.all.data : [];
+  if (!allData || allData.length === 0) return '';
+  
+  var up = 0, down = 0, flat = 0;
+  var strongUp = 0, strongDown = 0;
+  var totalSlope = 0;
+  
+  allData.forEach(function(r) {
+    var s = parseFloat(r.斜率) || 0;
+    var r2 = parseFloat(r['R²']) || 0;
+    totalSlope += s;
+    if (s > 0.005 && r2 > 0.5) strongUp++;
+    else if (s < -0.005 && r2 > 0.5) strongDown++;
+    if (s > 0.005) up++;
+    else if (s < -0.005) down++;
+    else flat++;
+  });
+  
+  var avgSlope = (totalSlope / allData.length).toFixed(4);
+  var direction = avgSlope > 0 ? '偏多' : '偏空';
+  var mktDesc = strongDown > strongUp ? '大盘偏弱，下跌趋势股居多' : 
+                strongUp > strongDown ? '大盘偏强，上涨趋势股居多' : 
+                '大盘震荡，多空力量均衡';
+  
+  var h = '<div class="card"><div class="card-header"><span>📋 市场总评</span></div>' +
+    '<div class="summary">' +
+    '<div class="title">' + mktDesc + '</div>' +
+    '<div class="row">📈 上涨 <span class="tag tag-up">' + up + '只</span> ' +
+    '📉 下跌 <span class="tag tag-down">' + down + '只</span> ' +
+    '➡️ 走平 <span class="tag tag-flat">' + flat + '只</span></div>' +
+    '<div class="row">⭐ 强上涨趋势: <span class="b">' + strongUp + '只</span> ' +
+    '⚠️ 强下跌趋势: <span class="b">' + strongDown + '只</span></div>' +
+    '<div class="row">📊 平均斜率: <span class="b">' + avgSlope + '</span> → ' + direction + '</div>' +
+    '<div style="margin-top:6px;font-size:11px;color:#636e72">💡 资金强度过滤: >0.5 | 动量周期: 25日 | 数据源: 问财+zzshare</div>' +
+    '</div></div>';
+  return h;
+}
+
+function switchTab(key) {
+  activeTab = key;
+  renderTabs();
+  renderContent();
+}
+
+function toggleDark() {
+  document.body.classList.toggle('dark-mode');
+  document.getElementById('darkToggle').classList.toggle('active');
+}
+
+// 初始渲染
+renderInfoBar();
+renderTabs();
+renderContent();
+// 默认关闭暗黑模式，但用户可打开
 </script>
 </body>
 </html>
+
+
+ 
