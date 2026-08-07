@@ -35,7 +35,13 @@
 </style>
 </head>
 <body>
-<div class="hdr">📊 板块强度轮动周期图 <small id="lastUpdate">加载中...</small> <button onclick="forceReload()" style="float:right;background:#0984e3;color:#fff;border:0;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">🔄 刷新数据</button></div>
+<div class="hdr">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+    <span>📊 板块强度轮动周期图</span>
+    <button onclick="forceReload()" style="background:#fff3;color:#fff;border:1px solid #fff8;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔄 刷新数据</button>
+  </div>
+  <div id="lastUpdate" style="font-size:12px;font-weight:normal;opacity:.9;margin-top:4px;text-align:left">加载中...</div>
+</div>
 <div class="nav">
   <button class="on" onclick="showTrend()">📈 强度时序</button>
   <button onclick="showDay()">📊 当日TOP</button>
