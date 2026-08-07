@@ -38,7 +38,10 @@
 <div class="hdr">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
     <span>📊 板块强度轮动周期图</span>
-    <button onclick="forceReload()" style="background:#fff3;color:#fff;border:1px solid #fff8;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔄 刷新数据</button>
+    <div style="display:flex;gap:8px">
+      <button onclick="showGuide()" title="使用说明" style="width:32px;height:32px;background:#fff3;color:#fff;border:1px solid #fff8;border-radius:6px;font-size:15px;cursor:pointer;line-height:1">📖</button>
+      <button onclick="forceReload()" title="刷新数据" style="width:32px;height:32px;background:#fff3;color:#fff;border:1px solid #fff8;border-radius:6px;font-size:15px;cursor:pointer;line-height:1">🔄</button>
+    </div>
   </div>
   <div id="lastUpdate" style="font-size:12px;font-weight:normal;opacity:.9;margin-top:4px;text-align:left">加载中...</div>
 </div>
@@ -46,7 +49,6 @@
   <button class="on" onclick="showTrend()">📈 强度时序</button>
   <button onclick="showDay()">📊 当日TOP</button>
   <button onclick="showHeat()">🔥 轮动热力图</button>
-  <button onclick="showGuide()" style="background:#6c5ce7;border-color:#6c5ce7">📖 使用说明</button>
   <select id="dateSel" onchange="if(document.getElementById('dayCard').style.display!=='none')showDay()" style="background:#2a3550;color:var(--text);border:1px solid #3a4a6a;border-radius:6px;padding:5px 8px;min-width:130px"></select>
   <select id="plateSel" onchange="showTrend()" style="background:#2a3550;color:var(--text);border:1px solid #3a4a6a;border-radius:6px;padding:5px 8px;min-width:120px;max-width:160px"></select>
 </div>
