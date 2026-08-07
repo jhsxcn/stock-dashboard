@@ -82,7 +82,7 @@ const PHASE_ORDER = ["冰点","退潮","震荡","启动","扩散","高潮"];
 function init(){ chartT=echarts.init(document.getElementById('chartTrend'));
   chartD=echarts.init(document.getElementById('chartDay'));
   chartH=echarts.init(document.getElementById('chartHeat'));
-  chartD.on('click', p=>{ const i = dayArr.length-1-p.dataIndex; if(dayArr[i]) showStocks(dayArr[i].name); });
+  chartD.on('click', p=>{ const i = dayArr.length-1-p.dataIndex; if(dayArr[i]) showStocks(dayArr[i][0]); });
   chartH.on('click', p=>{ const d0 = Object.keys(DATA).sort().slice(-20)[p.value[0]]; if(d0){ const nm = Object.keys(DATA[d0])[p.value[1]]; showStocks(nm); } });
   window.addEventListener('resize',()=>{chartT.resize();chartD.resize();chartH.resize();}); }
 
@@ -147,19 +147,19 @@ function showDay(){
   const dates = Object.keys(DATA).sort();
   const d = document.getElementById('dateSel').value || dates[dates.length-1];
   if(!DATA[d]){ chartD.clear(); return; }
-  dayArr = Object.values(DATA[d]).sort((a,b)=>a.rank-b.rank);
+  dayArr = Object.entries(DATA[d]).sort((a,b)=>a[1].rank-b[1].rank);  // [name, value]
   document.querySelector('#dayCard h3').textContent = d + ' 当日板块强度TOP12 + 主力资金 + 周期阶段';
   chartD.setOption({ tooltip:{trigger:'axis',axisPointer:{type:'shadow'}}, grid:{left:100,right:90,top:20,bottom:30},
-    xAxis:{type:'value'}, yAxis:{type:'category',data:dayArr.map(p=>p.name).reverse()},
-    series:[{type:'bar',data:dayArr.map(p=>({value:p.score,itemStyle:{color:PHASE_COLOR[p.phase]}})).reverse(),
-      label:{show:true,position:'right',formatter:function(pp){const q=dayArr[dayArr.length-1-pp.dataIndex];return q?('强度'+q.score+' · '+q.phase):'';}}}] });
+    xAxis:{type:'value'}, yAxis:{type:'category',data:dayArr.map(p=>p[0]).reverse()},
+    series:[{type:'bar',data:dayArr.map(p=>({value:p[1].score,itemStyle:{color:PHASE_COLOR[p[1].phase]}})).reverse(),
+      label:{show:true,position:'right',formatter:function(pp){const q=dayArr[dayArr.length-1-pp.dataIndex];return q?('强度'+q[1].score+' · '+q[1].phase):'';}}}] });
 }
 function showHeat(){
   document.getElementById('trendCard').style.display='none'; document.getElementById('dayCard').style.display='none'; document.getElementById('heatCard').style.display='';
   const dates = Object.keys(DATA).sort().slice(-20);
   const names = [];
   const seen = new Set();
-  [...dates].reverse().forEach(d=>Object.values(DATA[d]).sort((a,b)=>a.rank-b.rank).forEach(p=>{if(!seen.has(p.name)&&names.length<12)names.push(p.name);}));
+  [...dates].reverse().forEach(d=>Object.entries(DATA[d]).sort((a,b)=>a[1].rank-b[1].rank).forEach(([n,p])=>{if(!seen.has(n)&&names.length<12)names.push(n);}));
   const data = [];
   dates.forEach((d,di)=>{ names.forEach((n,ni)=>{ const p = DATA[d][n]; if(p) data.push([di,ni,p.score]); }); });
   chartH.setOption({ tooltip:{position:'top'}, grid:{left:80,right:20,top:10,bottom:60},
