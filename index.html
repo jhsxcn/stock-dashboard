@@ -149,10 +149,13 @@ function showDay(){
   if(!DATA[d]){ chartD.clear(); return; }
   dayArr = Object.entries(DATA[d]).sort((a,b)=>a[1].rank-b[1].rank);  // [name, value]
   document.querySelector('#dayCard h3').textContent = d + ' 当日板块强度TOP12 + 主力资金 + 周期阶段';
-  chartD.setOption({ tooltip:{trigger:'axis',axisPointer:{type:'shadow'}}, grid:{left:100,right:90,top:20,bottom:30},
-    xAxis:{type:'value'}, yAxis:{type:'category',data:dayArr.map(p=>p[0]).reverse()},
+  chartD.setOption({ tooltip:{trigger:'axis',axisPointer:{type:'shadow'},formatter:function(pp){
+    const i = dayArr.length-1-pp[0].dataIndex; const q = dayArr[i];
+    return q ? `<b>${q[0]}</b><br>强度 <b>${q[1].score}</b> · ${q[1].phase}<br>主力资金 ${q[1].fund}亿 · 涨幅 ${q[1].pct}%` : '';
+  }}, grid:{left:100,right:30,top:20,bottom:30,containLabel:true},
+    xAxis:{type:'value'}, yAxis:{type:'category',data:dayArr.map(p=>p[0]).reverse(),axisLabel:{fontSize:12}},
     series:[{type:'bar',data:dayArr.map(p=>({value:p[1].score,itemStyle:{color:PHASE_COLOR[p[1].phase]}})).reverse(),
-      label:{show:true,position:'right',formatter:function(pp){const q=dayArr[dayArr.length-1-pp.dataIndex];return q?('强度'+q[1].score+' · '+q[1].phase):'';}}}] });
+      label:{show:true,position:'right',formatter:function(pp){const q=dayArr[dayArr.length-1-pp.dataIndex];return q?q[1].score:'';},fontSize:11,color:'#e8ecf4'}}] });
 }
 function showHeat(){
   document.getElementById('trendCard').style.display='none'; document.getElementById('dayCard').style.display='none'; document.getElementById('heatCard').style.display='';
