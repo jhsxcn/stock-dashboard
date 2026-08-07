@@ -26,19 +26,24 @@ STOCK_SHOW = 20  # 成分股展示数
 
 
 def fetch(date_str):
-    """拉取板块强度(KPL score) + 主力资金 — plates_rank(17) 单源"""
-    from zzshare import DataApi
-    api = DataApi(ZZ_TOKEN)
-    res = api.plates_rank(17, date_str.replace("-", ""))
-    plates = []
-    for b in (res or [])[:TOP_N]:
-        nm = b.get("plate_name", "")
-        if nm:
-            plates.append({"name": nm, "code": b.get("plate_code", ""),
-                           "score": b.get("score", 0),
-                           "fund": round((b.get("money_leader", 0) or 0) / 1e8, 2),
-                           "pct": b.get("rate", "")})
-    return plates
+    """拉取板块强度(KPL score) + 主力资金 — plates_rank(17) 单源
+    异常/None/[] 一律视为无数据, 由 main 统一回退处理"""
+    try:
+        from zzshare import DataApi
+        api = DataApi(ZZ_TOKEN)
+        res = api.plates_rank(17, date_str.replace("-", ""))
+        plates = []
+        for b in (res or [])[:TOP_N]:
+            nm = b.get("plate_name", "")
+            if nm:
+                plates.append({"name": nm, "code": b.get("plate_code", ""),
+                               "score": b.get("score", 0),
+                               "fund": round((b.get("money_leader", 0) or 0) / 1e8, 2),
+                               "pct": b.get("rate", "")})
+        return plates
+    except Exception as e:
+        print(f"   ⚠️ {date_str} 拉取异常: {type(e).__name__}: {str(e)[:80]}")
+        return []
 
 
 def to_qq(code):
@@ -125,6 +130,17 @@ def main():
 
     print(f"📅 板块强度轮动生成 {date_str}")
     plates = fetch(date_str)
+    # 当天无数据(盘前/休市) → 往前回退最多3天
+    if not plates:
+        from datetime import timedelta
+        d0 = datetime.strptime(date_str, "%Y-%m-%d")
+        for back in range(1, 4):
+            cand = (d0 - timedelta(days=back)).strftime("%Y-%m-%d")
+            plates = fetch(cand)
+            if plates:
+                print(f"⚠️ 当天无数据，回退使用 {cand}")
+                date_str = cand
+                break
     if not plates:
         print("❌ 数据获取失败")
         sys.exit(1)
