@@ -39,6 +39,7 @@
   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
     <span>📊 板块强度轮动周期图</span>
     <div style="display:flex;gap:8px">
+      <button onclick="showDatePicker()" title="选择日期" style="width:32px;height:32px;background:#fff3;color:#fff;border:1px solid #fff8;border-radius:6px;font-size:15px;cursor:pointer;line-height:1">📅</button>
       <button onclick="showGuide()" title="使用说明" style="width:32px;height:32px;background:#fff3;color:#fff;border:1px solid #fff8;border-radius:6px;font-size:15px;cursor:pointer;line-height:1">📖</button>
       <button onclick="forceReload()" title="刷新数据" style="width:32px;height:32px;background:#fff3;color:#fff;border:1px solid #fff8;border-radius:6px;font-size:15px;cursor:pointer;line-height:1">🔄</button>
     </div>
@@ -49,7 +50,6 @@
   <button class="on" onclick="showTrend()">📈 强度时序</button>
   <button onclick="showDay()">📊 当日TOP</button>
   <button onclick="showHeat()">🔥 轮动热力图</button>
-  <select id="dateSel" onchange="if(document.getElementById('dayCard').style.display!=='none')showDay()" style="background:#2a3550;color:var(--text);border:1px solid #3a4a6a;border-radius:6px;padding:5px 8px;min-width:130px"></select>
   <select id="plateSel" onchange="showTrend()" style="background:#2a3550;color:var(--text);border:1px solid #3a4a6a;border-radius:6px;padding:5px 8px;min-width:120px;max-width:160px"></select>
 </div>
 <div id="status"></div>
@@ -78,6 +78,13 @@
     <table id="stkLeaderTbl"><thead><tr><th>名称</th><th>代码</th><th>涨幅</th></tr></thead><tbody id="stkLeader"></tbody></table>
     <div style="font-size:12px;color:var(--sub);margin:8px 0 4px">📋 成分股涨幅 TOP20</div>
     <div id="stkList"></div>
+  </div>
+</div>
+<div id="dateModal" onclick="if(event.target==this)this.style.display='none'">
+  <div class="box" style="max-width:380px">
+    <span class="close" onclick="document.getElementById('dateModal').style.display='none'">✕</span>
+    <h3 style="margin:0 0 10px;color:#74b9ff">📅 选择日期</h3>
+    <div id="dateList" style="display:flex;flex-wrap:wrap;gap:8px;font-size:13px"></div>
   </div>
 </div>
 <div id="guideModal" onclick="if(event.target==this)this.style.display='none'">
@@ -167,6 +174,7 @@ async function load(){
   }
 }
 const WEEK = ['日','一','二','三','四','五','六'];
+let curDate = '';  // 当前选中日期
 function buildSel(dates){
   const sel = document.getElementById('plateSel');
   const names = new Set(); dates.forEach(d=>Object.keys(DATA[d]||{}).forEach(n=>names.add(n)));
@@ -175,10 +183,21 @@ function buildSel(dates){
   const last = dates[dates.length-1];
   const topEntry = Object.entries(DATA[last]||{}).sort((a,b)=>a[1].rank-b[1].rank)[0];
   if(topEntry) sel.value = topEntry[0];
-  // 日期下拉：倒序（最新在前），默认选中最新交易日
-  const ds = document.getElementById('dateSel');
-  ds.innerHTML = [...dates].reverse().map(d=>`<option value="${d}">${d} 周${WEEK[new Date(d+'T12:00:00').getDay()]}</option>`).join('');
-  ds.value = last;
+  // 日期默认选中最新交易日
+  if(!curDate) curDate = last;
+}
+function showDatePicker(){
+  const dates = Object.keys(DATA).sort().reverse();
+  document.getElementById('dateList').innerHTML = dates.map(d=>{
+    const active = (d===curDate) ? 'background:#0984e3;color:#fff;border-color:#0984e3' : '';
+    return `<button onclick="pickDate('${d}')" style="flex:1 1 40%;min-width:140px;background:#2a3550;color:var(--text);border:1px solid #3a4a6a;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;${active}">${d} 周${WEEK[new Date(d+'T12:00:00').getDay()]}${d===curDate?' · 当前':''}</button>`;
+  }).join('');
+  document.getElementById('dateModal').style.display='flex';
+}
+function pickDate(d){
+  curDate = d;
+  document.getElementById('dateModal').style.display='none';
+  showDay();
 }
 function showTrend(){
   document.getElementById('trendCard').style.display=''; document.getElementById('dayCard').style.display='none'; document.getElementById('heatCard').style.display='none';
@@ -201,7 +220,7 @@ function showTrend(){
 function showDay(){
   document.getElementById('trendCard').style.display='none'; document.getElementById('dayCard').style.display=''; document.getElementById('heatCard').style.display='none';
   const dates = Object.keys(DATA).sort();
-  const d = document.getElementById('dateSel').value || dates[dates.length-1];
+  const d = curDate || dates[dates.length-1];
   if(!DATA[d]){ chartD.clear(); return; }
   dayArr = Object.entries(DATA[d]).sort((a,b)=>a[1].rank-b[1].rank);  // [name, value]
   document.querySelector('#dayCard h3').textContent = d + ' 当日板块强度TOP12 + 主力资金 + 周期阶段';
