@@ -39,6 +39,7 @@
   <button class="on" onclick="showTrend()">📈 强度时序</button>
   <button onclick="showDay()">📊 当日TOP</button>
   <button onclick="showHeat()">🔥 轮动热力图</button>
+  <select id="dateSel" onchange="if(document.getElementById('dayCard').style.display!=='none')showDay()" style="background:#2a3550;color:var(--text);border:1px solid #3a4a6a;border-radius:6px;padding:5px 8px"></select>
   <select id="plateSel" onchange="showTrend()" style="background:#2a3550;color:var(--text);border:1px solid #3a4a6a;border-radius:6px;padding:5px 8px"></select>
 </div>
 <div id="status"></div>
@@ -103,35 +104,51 @@ async function load(){
     const dates = Object.keys(DATA).sort();
     document.getElementById('lastUpdate').textContent = '数据至 ' + (dates[dates.length-1]||'') + ' · ' + dates.length + '个交易日';
     buildSel(dates);
-    showTrend();
+    showDay();
   }catch(e){
     document.getElementById('lastUpdate').textContent = '❌ 数据加载失败';
     document.getElementById('status').textContent = '请确认 rotation_data.json 已生成（首次需先运行 generate_rotation.py）';
   }
 }
+const WEEK = ['日','一','二','三','四','五','六'];
 function buildSel(dates){
   const sel = document.getElementById('plateSel');
   const names = new Set(); dates.forEach(d=>Object.keys(DATA[d]||{}).forEach(n=>names.add(n)));
   sel.innerHTML = [...names].map(n=>`<option>${n}</option>`).join('');
-  sel.selectedIndex = 0;
+  // 板块默认选最新交易日 rank1 的热点板块
+  const last = dates[dates.length-1];
+  const top1 = Object.values(DATA[last]||{}).sort((a,b)=>a.rank-b.rank)[0];
+  if(top1) sel.value = top1.name;
+  // 日期下拉：倒序（最新在前），默认选中最新交易日
+  const ds = document.getElementById('dateSel');
+  ds.innerHTML = [...dates].reverse().map(d=>`<option value="${d}">${d} 周${WEEK[new Date(d+'T12:00:00').getDay()]}</option>`).join('');
+  ds.value = last;
 }
 function showTrend(){
   document.getElementById('trendCard').style.display=''; document.getElementById('dayCard').style.display='none'; document.getElementById('heatCard').style.display='none';
-  const plate = document.getElementById('plateSel').value;
   const dates = Object.keys(DATA).sort();
+  let plate = document.getElementById('plateSel').value;
+  // 若所选板块无历史, 回退到历史最全板块
+  if(!dates.some(d=>DATA[d][plate])){
+    const cnt = {}; dates.forEach(d=>Object.keys(DATA[d]).forEach(n=>cnt[n]=(cnt[n]||0)+1));
+    plate = Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0][0];
+    document.getElementById('plateSel').value = plate;
+  }
   const series = [];
-  const target = plate;
-  dates.forEach(d=>{ const p = DATA[d][target]; if(p) series.push([d.slice(5), p.score]); });
+  dates.forEach(d=>{ const p = DATA[d][plate]; if(p) series.push([d.slice(5), p.score]); });
   chartT.setOption({ tooltip:{trigger:'axis'}, grid:{left:45,right:20,top:20,bottom:45},
     xAxis:{type:'category',data:series.map(s=>s[0])},
     yAxis:{type:'value',name:'强度'},
-    series:[{name:target,type:'line',smooth:true,data:series.map(s=>s[1]),areaStyle:{opacity:.15},lineStyle:{width:3}}] });
+    series:[{name:plate,type:'line',smooth:true,data:series.map(s=>s[1]),areaStyle:{opacity:.15},lineStyle:{width:3}}] });
 }
 function showDay(){
   document.getElementById('trendCard').style.display='none'; document.getElementById('dayCard').style.display=''; document.getElementById('heatCard').style.display='none';
-  const dates = Object.keys(DATA).sort(); const d = dates[dates.length-1];
+  const dates = Object.keys(DATA).sort();
+  const d = document.getElementById('dateSel').value || dates[dates.length-1];
+  if(!DATA[d]){ chartD.clear(); return; }
   dayArr = Object.values(DATA[d]).sort((a,b)=>a.rank-b.rank);
-  chartD.setOption({ tooltip:{trigger:'axis',axisPointer:{type:'shadow'}}, grid:{left:100,right:60,top:20,bottom:30},
+  document.querySelector('#dayCard h3').textContent = d + ' 当日板块强度TOP12 + 主力资金 + 周期阶段';
+  chartD.setOption({ tooltip:{trigger:'axis',axisPointer:{type:'shadow'}}, grid:{left:100,right:90,top:20,bottom:30},
     xAxis:{type:'value'}, yAxis:{type:'category',data:dayArr.map(p=>p.name).reverse()},
     series:[{type:'bar',data:dayArr.map(p=>({value:p.score,itemStyle:{color:PHASE_COLOR[p.phase]}})).reverse(),
       label:{show:true,position:'right',formatter:function(pp){const q=dayArr[dayArr.length-1-pp.dataIndex];return q?('强度'+q.score+' · '+q.phase):'';}}}] });
