@@ -54,7 +54,7 @@
 </div>
 <div id="status"></div>
 <div class="card" id="trendCard">
-  <h3>板块强度时序曲线（KPL强度 score）</h3>
+  <h3>板块强度时序曲线（KPL 强度分）</h3>
   <div class="legend-phase">
     <span class="ph-start">启动</span><span class="ph-expand">扩散</span>
     <span class="ph-high">高潮</span><span class="ph-recede">退潮</span>
@@ -92,7 +92,7 @@
     <span class="close" onclick="document.getElementById('guideModal').style.display='none'">✕</span>
     <h3 style="margin:0 0 10px;color:#74b9ff">📖 板块强度轮动图使用说明</h3>
     <div style="font-size:13px;line-height:1.7;color:var(--text);overflow:auto">
-      <p style="margin:6px 0;color:var(--sub)">本页基于 <b>KPL 板块强度评分（score）</b> 每日收盘后生成，展示 A 股板块轮动状态。三项指标：<b>强度 score</b>（板块热度/资金综合分）、<b>主力资金 fund</b>（亿元，正=流入 负=流出）、<b>涨幅 pct</b>（%）。</p>
+      <p style="margin:6px 0;color:var(--sub)">本页基于 <b>KPL 板块强度评分（简称"强度"）</b> 每日收盘后生成，展示 A 股板块轮动状态。三项指标：<b>强度</b>（板块热度/资金综合分）、<b>主力资金</b>（亿元，正=流入 负=流出）、<b>涨幅</b>（%）。</p>
       <h4 style="margin:12px 0 6px;color:#74b9ff">一、三张图怎么看</h4>
       <table style="width:100%;border-collapse:collapse;font-size:12px">
         <tr style="background:#2a3550"><th style="padding:6px 8px;text-align:left">视图</th><th style="padding:6px 8px;text-align:left">看什么</th><th style="padding:6px 8px;text-align:left">怎么判</th></tr>
@@ -100,9 +100,9 @@
         <tr><td style="padding:6px 8px;border-bottom:1px solid var(--line)"><b>📊 当日TOP</b></td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">某日强度 TOP12 排名+资金+阶段，点条形看成分股/领涨股</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">长条+正资金=资金推动强；「高潮」却资金流出=谨防出货；「退潮」=回避</td></tr>
         <tr><td style="padding:6px 8px;border-bottom:1px solid var(--line)"><b>🔥 轮动热力图</b></td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">近20日全部板块强度横向对比（行=板块 列=日期，★今日=最新日）</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">连续多日暖色=主线板块；暖转冷=资金撤离；冷转暖=启动信号</td></tr>
       </table>
-      <h4 style="margin:12px 0 6px;color:#74b9ff">二、强度数值区间（score，经验分档）</h4>
+      <h4 style="margin:12px 0 6px;color:#74b9ff">二、强度数值区间（强度分，经验分档）</h4>
       <table style="width:100%;border-collapse:collapse;font-size:12px">
-        <tr style="background:#2a3550"><th style="padding:6px 8px">score 区间</th><th style="padding:6px 8px">强度</th><th style="padding:6px 8px">阶段含义</th><th style="padding:6px 8px">操作参考</th></tr>
+        <tr style="background:#2a3550"><th style="padding:6px 8px">强度分区间</th><th style="padding:6px 8px">强度</th><th style="padding:6px 8px">阶段含义</th><th style="padding:6px 8px">操作参考</th></tr>
         <tr><td style="padding:6px 8px;border-bottom:1px solid var(--line)"><b>≥ 20000</b></td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">极强 🔴</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">高潮/主升</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">龙头可持，<b>勿高位追</b></td></tr>
         <tr><td style="padding:6px 8px;border-bottom:1px solid var(--line)"><b>10000~20000</b></td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">强势 🟠</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">扩散/主升</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">重点关注，回踩低吸</td></tr>
         <tr><td style="padding:6px 8px;border-bottom:1px solid var(--line)"><b>5000~10000</b></td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">中等 🔵</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">启动/震荡</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">观察确认，轻仓试探</td></tr>
@@ -121,7 +121,7 @@
       </div>
       <h4 style="margin:12px 0 6px;color:#74b9ff">四、用数据指导买卖（超短线框架）</h4>
       <div style="font-size:12px;color:var(--text)">
-        <div><b>① 选板块</b>：score ≥ 10000 + 主力资金大幅流入（fund 为正且排名靠前）+ 阶段「启动/扩散」为最佳介入窗口。</div>
+        <div><b>① 选板块</b>：强度 ≥ 10000 + 主力资金大幅流入（主力资金为正且排名靠前）+ 阶段「启动/扩散」为最佳介入窗口。</div>
         <div><b>② 选个股</b>：点击板块条形 → 看成分股弹窗 → 选领涨股（涨幅居前）+ 叠加基本面过滤（净利润 &gt; 0、非一字板、竞价涨幅 &lt; 9%）。</div>
         <div><b>③ 买点</b>：扩散初期 / 回踩不破阶段支撑；回避「高潮」末端追高。</div>
         <div><b>④ 卖点</b>：强度从高位回落 10% 以上、主力资金转流出、板块「退潮」时减仓；热力图颜色由暖转冷是同步预警。</div>
