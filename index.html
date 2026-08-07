@@ -35,13 +35,13 @@
 </style>
 </head>
 <body>
-<div class="hdr">📊 板块强度轮动周期图 <small id="lastUpdate">加载中...</small></div>
+<div class="hdr">📊 板块强度轮动周期图 <small id="lastUpdate">加载中...</small> <button onclick="forceReload()" style="float:right;background:#0984e3;color:#fff;border:0;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">🔄 刷新数据</button></div>
 <div class="nav">
   <button class="on" onclick="showTrend()">📈 强度时序</button>
   <button onclick="showDay()">📊 当日TOP</button>
   <button onclick="showHeat()">🔥 轮动热力图</button>
-  <select id="dateSel" onchange="if(document.getElementById('dayCard').style.display!=='none')showDay()" style="background:#2a3550;color:var(--text);border:1px solid #3a4a6a;border-radius:6px;padding:5px 8px"></select>
-  <select id="plateSel" onchange="showTrend()" style="background:#2a3550;color:var(--text);border:1px solid #3a4a6a;border-radius:6px;padding:5px 8px"></select>
+  <select id="dateSel" onchange="if(document.getElementById('dayCard').style.display!=='none')showDay()" style="background:#2a3550;color:var(--text);border:1px solid #3a4a6a;border-radius:6px;padding:5px 8px;min-width:130px"></select>
+  <select id="plateSel" onchange="showTrend()" style="background:#2a3550;color:var(--text);border:1px solid #3a4a6a;border-radius:6px;padding:5px 8px;min-width:120px;max-width:160px"></select>
 </div>
 <div id="status"></div>
 <div class="card" id="trendCard">
@@ -85,6 +85,7 @@ function init(){ chartT=echarts.init(document.getElementById('chartTrend'));
   chartD.on('click', p=>{ const i = dayArr.length-1-p.dataIndex; if(dayArr[i]) showStocks(dayArr[i][0]); });
   chartH.on('click', p=>{ const d0 = Object.keys(DATA).sort().slice(-20)[p.value[0]]; if(d0){ const nm = Object.keys(DATA[d0])[p.value[1]]; showStocks(nm); } });
   window.addEventListener('resize',()=>{chartT.resize();chartD.resize();chartH.resize();}); }
+function forceReload(){ location.href = location.pathname + '?t=' + Date.now(); }
 
 function latestDay(){ const dates=Object.keys(DATA).sort(); return DATA[dates[dates.length-1]] ? Object.values(DATA[dates[dates.length-1]]).sort((a,b)=>a.rank-b.rank) : null; }
 
