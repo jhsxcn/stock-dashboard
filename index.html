@@ -46,6 +46,7 @@
   <button class="on" onclick="showTrend()">📈 强度时序</button>
   <button onclick="showDay()">📊 当日TOP</button>
   <button onclick="showHeat()">🔥 轮动热力图</button>
+  <button onclick="showGuide()" style="background:#6c5ce7;border-color:#6c5ce7">📖 使用说明</button>
   <select id="dateSel" onchange="if(document.getElementById('dayCard').style.display!=='none')showDay()" style="background:#2a3550;color:var(--text);border:1px solid #3a4a6a;border-radius:6px;padding:5px 8px;min-width:130px"></select>
   <select id="plateSel" onchange="showTrend()" style="background:#2a3550;color:var(--text);border:1px solid #3a4a6a;border-radius:6px;padding:5px 8px;min-width:120px;max-width:160px"></select>
 </div>
@@ -77,6 +78,50 @@
     <div id="stkList"></div>
   </div>
 </div>
+<div id="guideModal" onclick="if(event.target==this)this.style.display='none'">
+  <div class="box" style="max-width:720px">
+    <span class="close" onclick="document.getElementById('guideModal').style.display='none'">✕</span>
+    <h3 style="margin:0 0 10px;color:#74b9ff">📖 板块强度轮动图使用说明</h3>
+    <div style="font-size:13px;line-height:1.7;color:var(--text);overflow:auto">
+      <p style="margin:6px 0;color:var(--sub)">本页基于 <b>KPL 板块强度评分（score）</b> 每日收盘后生成，展示 A 股板块轮动状态。三项指标：<b>强度 score</b>（板块热度/资金综合分）、<b>主力资金 fund</b>（亿元，正=流入 负=流出）、<b>涨幅 pct</b>（%）。</p>
+      <h4 style="margin:12px 0 6px;color:#74b9ff">一、三张图怎么看</h4>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <tr style="background:#2a3550"><th style="padding:6px 8px;text-align:left">视图</th><th style="padding:6px 8px;text-align:left">看什么</th><th style="padding:6px 8px;text-align:left">怎么判</th></tr>
+        <tr><td style="padding:6px 8px;border-bottom:1px solid var(--line)"><b>📈 强度时序</b></td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">选一个板块，看其强度历史曲线</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">连续上行=资金持续流入；高位横盘=警惕见顶；快速回落=退潮信号</td></tr>
+        <tr><td style="padding:6px 8px;border-bottom:1px solid var(--line)"><b>📊 当日TOP</b></td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">某日强度 TOP12 排名+资金+阶段，点条形看成分股/领涨股</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">长条+正资金=资金推动强；「高潮」却资金流出=谨防出货；「退潮」=回避</td></tr>
+        <tr><td style="padding:6px 8px;border-bottom:1px solid var(--line)"><b>🔥 轮动热力图</b></td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">近20日全部板块强度横向对比（行=板块 列=日期，★今日=最新日）</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">连续多日暖色=主线板块；暖转冷=资金撤离；冷转暖=启动信号</td></tr>
+      </table>
+      <h4 style="margin:12px 0 6px;color:#74b9ff">二、强度数值区间（score，经验分档）</h4>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <tr style="background:#2a3550"><th style="padding:6px 8px">score 区间</th><th style="padding:6px 8px">强度</th><th style="padding:6px 8px">阶段含义</th><th style="padding:6px 8px">操作参考</th></tr>
+        <tr><td style="padding:6px 8px;border-bottom:1px solid var(--line)"><b>≥ 20000</b></td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">极强 🔴</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">高潮/主升</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">龙头可持，<b>勿高位追</b></td></tr>
+        <tr><td style="padding:6px 8px;border-bottom:1px solid var(--line)"><b>10000~20000</b></td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">强势 🟠</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">扩散/主升</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">重点关注，回踩低吸</td></tr>
+        <tr><td style="padding:6px 8px;border-bottom:1px solid var(--line)"><b>5000~10000</b></td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">中等 🔵</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">启动/震荡</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">观察确认，轻仓试探</td></tr>
+        <tr><td style="padding:6px 8px;border-bottom:1px solid var(--line)"><b>2000~5000</b></td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">偏弱 ⚪</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">震荡/退潮</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">谨慎参与</td></tr>
+        <tr><td style="padding:6px 8px;border-bottom:1px solid var(--line)"><b>&lt; 2000</b></td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">弱势 ⚫</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)">冰点/退潮</td><td style="padding:6px 8px;border-bottom:1px solid var(--line)"><b>回避</b></td></tr>
+      </table>
+      <p style="margin:6px 0;color:var(--sub);font-size:11px">※ 区间为基于历史数据的经验参考（近4日样本 1841~29476），非官方标准，随行情中枢动态调整。</p>
+      <h4 style="margin:12px 0 6px;color:#74b9ff">三、周期阶段判定规则</h4>
+      <div style="font-size:12px;color:var(--text)">
+        <div>🟢 <b>启动</b>：板块首次上榜，排名暂无历史对比</div>
+        <div>🔵 <b>扩散</b>：排名上升 + 强度较前日涨 5% 以上 → 资金加速进场</div>
+        <div>🔴 <b>高潮</b>：连续多日位居前 3 → 主升中后段，追高风险加大</div>
+        <div>🟣 <b>退潮</b>：排名后退 3 名以上 或 强度跌 10% 以上 → 资金撤离</div>
+        <div>⚫ <b>冰点</b>：排名跌至 8 名以后 → 冷门期，回避</div>
+        <div>🟡 <b>震荡</b>：其余情形，方向未明</div>
+      </div>
+      <h4 style="margin:12px 0 6px;color:#74b9ff">四、用数据指导买卖（超短线框架）</h4>
+      <div style="font-size:12px;color:var(--text)">
+        <div><b>① 选板块</b>：score ≥ 10000 + 主力资金大幅流入（fund 为正且排名靠前）+ 阶段「启动/扩散」为最佳介入窗口。</div>
+        <div><b>② 选个股</b>：点击板块条形 → 看成分股弹窗 → 选领涨股（涨幅居前）+ 叠加基本面过滤（净利润 &gt; 0、非一字板、竞价涨幅 &lt; 9%）。</div>
+        <div><b>③ 买点</b>：扩散初期 / 回踩不破阶段支撑；回避「高潮」末端追高。</div>
+        <div><b>④ 卖点</b>：强度从高位回落 10% 以上、主力资金转流出、板块「退潮」时减仓；热力图颜色由暖转冷是同步预警。</div>
+        <div><b>⑤ 风控</b>：市场情绪冰点（TOP 强度普遍 &lt; 5000）时降低仓位或空仓；个股严格止损。</div>
+      </div>
+      <p style="margin:10px 0 0;color:var(--sub);font-size:11px;border-top:1px solid var(--line);padding-top:8px">⚠️ 免责声明：本页数据来自公开行情接口，仅供参考与学习，不构成任何投资建议。股市有风险，入市需谨慎。</p>
+    </div>
+  </div>
+</div>
 <script>
 let DATA = null;
 let STOCKS = null;
@@ -92,6 +137,7 @@ function init(){ chartT=echarts.init(document.getElementById('chartTrend'));
   chartH.on('click', p=>{ const d0 = Object.keys(DATA).sort().slice(-20)[p.value[0]]; if(d0){ const nm = Object.keys(DATA[d0])[p.value[1]]; showStocks(nm); } });
   window.addEventListener('resize',()=>{chartT.resize();chartD.resize();chartH.resize();}); }
 function forceReload(){ location.href = location.pathname + '?t=' + Date.now(); }
+function showGuide(){ document.getElementById('guideModal').style.display='flex'; }
 
 function latestDay(){ const dates=Object.keys(DATA).sort(); return DATA[dates[dates.length-1]] ? Object.values(DATA[dates[dates.length-1]]).sort((a,b)=>a.rank-b.rank) : null; }
 
