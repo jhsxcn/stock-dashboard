@@ -162,7 +162,7 @@ function showHeat(){
   const dates = Object.keys(DATA).sort().slice(-20);
   const names = [];
   const seen = new Set();
-  [...dates].reverse().forEach(d=>Object.entries(DATA[d]).sort((a,b)=>a[1].rank-b[1].rank).forEach(([n,p])=>{if(!seen.has(n)&&names.length<12)names.push(n);}));
+  [...dates].reverse().forEach(d=>Object.entries(DATA[d]).sort((a,b)=>a[1].rank-b[1].rank).forEach(([n,p])=>{if(!seen.has(n)&&names.length<12){names.push(n);seen.add(n);}}));
   const data = [];
   dates.forEach((d,di)=>{ names.forEach((n,ni)=>{ const p = DATA[d][n]; if(p) data.push([di,ni,p.score]); }); });
   chartH.setOption({ tooltip:{position:'top'}, grid:{left:80,right:20,top:10,bottom:60},
