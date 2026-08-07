@@ -134,6 +134,7 @@
 <script>
 let DATA = null;
 let STOCKS = null;
+let HIST = null;  // 历史成分股名单 rotation_stocks_history.json
 let chartT, chartD, chartH;
 let dayArr = [];  // 当日TOP数组(供点击)
 const PHASE_COLOR = { "启动":"#00b894", "扩散":"#0984e3", "高潮":"#e17055", "退潮":"#6c5ce7", "冰点":"#636e72", "震荡":"#fdcb6e" };
@@ -151,11 +152,23 @@ function showGuide(){ document.getElementById('guideModal').style.display='flex'
 function latestDay(){ const dates=Object.keys(DATA).sort(); return DATA[dates[dates.length-1]] ? Object.values(DATA[dates[dates.length-1]]).sort((a,b)=>a.rank-b.rank) : null; }
 
 function showStocks(plateName){
+  const dates = Object.keys(DATA).sort();
+  const cur = curDate || dates[dates.length-1];
   const s = STOCKS && STOCKS[plateName];
-  if(!s){ document.getElementById('stkTitle').textContent = plateName + ' · 暂无成分股数据'; document.getElementById('stkLeader').innerHTML=''; document.getElementById('stkList').innerHTML=''; document.getElementById('stkModal').style.display='flex'; return; }
-  document.getElementById('stkTitle').textContent = '📊 ' + plateName + ' · 成分股 ' + s.total + ' 只';
-  document.getElementById('stkLeader').innerHTML = s.leaders.map(l=>`<tr><td>${l[0]}</td><td class="nm">${l[1]}</td><td class="nm">${l[2]}</td></tr>`).join('');
-  document.getElementById('stkList').innerHTML = s.stocks.map(l=>`<span>${l[0]} ${l[1]} ${l[2]}</span>`).join('');
+  const h = HIST && HIST[cur] && HIST[cur][plateName];
+  if(h && (!s || s.date !== cur)){
+    // 历史回溯名单(无当日涨跌幅)
+    document.getElementById('stkTitle').textContent = '📊 ' + plateName + ' · ' + cur + ' 成分股 ' + h.total + ' 只(历史名单)';
+    document.getElementById('stkLeader').innerHTML = '<tr><td colspan="3" style="color:var(--sub)">历史回溯名单(无当日涨跌幅，数据源限制)</td></tr>';
+    document.getElementById('stkList').innerHTML = h.stocks.map(l=>`<span>${l[1]} ${l[0]}</span>`).join('');
+    document.getElementById('stkModal').style.display='flex';
+    return;
+  }
+  const t = s && s.date===cur ? s : STOCKS[plateName];
+  if(!t){ document.getElementById('stkTitle').textContent = plateName + ' · 暂无成分股数据'; document.getElementById('stkLeader').innerHTML=''; document.getElementById('stkList').innerHTML=''; document.getElementById('stkModal').style.display='flex'; return; }
+  document.getElementById('stkTitle').textContent = '📊 ' + plateName + ' · 成分股 ' + t.total + ' 只';
+  document.getElementById('stkLeader').innerHTML = t.leaders.map(l=>`<tr><td>${l[0]}</td><td class="nm">${l[1]}</td><td class="nm">${l[2]}</td></tr>`).join('');
+  document.getElementById('stkList').innerHTML = t.stocks.map(l=>`<span>${l[0]} ${l[1]} ${l[2]}</span>`).join('');
   document.getElementById('stkModal').style.display='flex';
 }
 
@@ -164,6 +177,7 @@ async function load(){
     const r = await fetch('rotation_data.json?v='+Date.now());
     DATA = await r.json();
     try{ const rs = await fetch('rotation_stocks.json?v='+Date.now()); STOCKS = await rs.json(); }catch(e){ STOCKS = null; }
+    try{ const rh = await fetch('rotation_stocks_history.json?v='+Date.now()); HIST = await rh.json(); }catch(e){ HIST = null; }
     const dates = Object.keys(DATA).sort();
     document.getElementById('lastUpdate').textContent = '数据至 ' + (dates[dates.length-1]||'') + ' · ' + dates.length + '个交易日';
     buildSel(dates);
