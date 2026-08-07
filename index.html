@@ -179,7 +179,7 @@ function showHeat(){
   const sorted = [...scores].sort((a,b)=>a-b);
   const vmin = sorted[0], vmax = sorted[Math.floor(scores.length*0.9)] * 1.05;
   chartH.setOption({ tooltip:{position:'top',formatter:function(pp){return `${pp.value[2]}`;}}, grid:{left:80,right:20,top:10,bottom:60},
-    xAxis:{type:'category',data:dates.map(d=>d.slice(5)),splitArea:{show:true},axisLabel:{interval:0,fontSize:11,color:function(v,idx){return idx===dates.length-1?'#e17055':'#8b95ab';},fontWeight:function(v,idx){return idx===dates.length-1?'bold':'normal';},formatter:function(v,idx){return idx===dates.length-1?(v+' ★今日'):v;}}},
+    xAxis:{type:'category',boundaryGap:true,data:dates.map(d=>d.slice(5)),splitArea:{show:true},axisLabel:{interval:0,fontSize:11,align:'center',color:function(v,idx){return idx===dates.length-1?'#e17055':'#8b95ab';},fontWeight:function(v,idx){return idx===dates.length-1?'bold':'normal';},formatter:function(v,idx){return idx===dates.length-1?(v+'\n★今日'):v;},lineHeight:15}},
     yAxis:{type:'category',data:names,splitArea:{show:true}},
     visualMap:{min:vmin,max:vmax,calculable:false,orient:'horizontal',left:'center',bottom:0,text:['强','弱'],inRange:{color:['#1a2233','#2a3550','#0984e3','#e17055']}},
     series:[{type:'heatmap',data:data,label:{show:true,fontSize:10,color:'#e8ecf4',formatter:function(pp){return pp.value[2]>=1000?(pp.value[2]/1000).toFixed(1)+'k':''}}}] }, true);
