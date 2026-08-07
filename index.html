@@ -219,12 +219,37 @@ function buildSel(dates){
   if(!curDate) curDate = last;
 }
 function showDatePicker(){
-  const dates = Object.keys(DATA).sort().reverse();
-  document.getElementById('dateList').innerHTML = dates.map(d=>{
-    const active = (d===curDate) ? 'background:#0984e3;color:#fff;border-color:#0984e3' : '';
-    return `<button onclick="pickDate('${d}')" style="flex:1 1 40%;min-width:140px;background:#2a3550;color:var(--text);border:1px solid #3a4a6a;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;${active}">${d} 周${WEEK[new Date(d+'T12:00:00').getDay()]}${d===curDate?' · 当前':''}</button>`;
-  }).join('');
+  const dates = Object.keys(DATA).sort();
+  const last = dates[dates.length-1];
+  const recent = dates.slice(-8).reverse();
+  const cur = curDate || last;
+  document.getElementById('dateList').innerHTML = `
+    <input type="date" id="dateInput" min="2022-12-26" max="${last}" value="${cur}"
+      style="width:100%;box-sizing:border-box;color-scheme:dark;background:#2a3550;color:var(--text);border:1px solid #3a4a6a;border-radius:8px;padding:10px;font-size:14px;margin-bottom:10px">
+    <button onclick="confirmPickDate()" style="width:100%;background:#0984e3;color:#fff;border:0;border-radius:8px;padding:10px;font-size:14px;cursor:pointer;margin-bottom:12px">✔ 确认选择</button>
+    <div style="font-size:12px;color:var(--sub);margin-bottom:6px">最近交易日快捷选择:</div>
+    ${recent.map(d=>{
+      const active = (d===cur) ? 'background:#0984e3;color:#fff;border-color:#0984e3' : '';
+      return `<button onclick="pickDate('${d}')" style="flex:1 1 40%;min-width:140px;background:#2a3550;color:var(--text);border:1px solid #3a4a6a;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;${active}">${d} 周${WEEK[new Date(d+'T12:00:00').getDay()]}${d===cur?' · 当前':''}</button>`;
+    }).join('')}`;
   document.getElementById('dateModal').style.display='flex';
+}
+function confirmPickDate(){
+  const d = document.getElementById('dateInput').value;
+  if(!d) return;
+  const dates = Object.keys(DATA).sort();
+  if(!DATA[d]){
+    // 非交易日: 回退到最近一个交易日
+    const prev = [...dates].filter(x=>x<=d).pop();
+    if(prev){
+      alert('⚠️ ' + d + ' 无交易数据(非交易日/休市)，已切换到最近交易日 ' + prev);
+      pickDate(prev);
+    } else {
+      alert('⚠️ ' + d + ' 超出可查询范围(最早 2022-12-26)');
+    }
+    return;
+  }
+  pickDate(d);
 }
 function pickDate(d){
   curDate = d;
