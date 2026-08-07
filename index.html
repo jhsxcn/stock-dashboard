@@ -117,10 +117,10 @@ function buildSel(dates){
   const sel = document.getElementById('plateSel');
   const names = new Set(); dates.forEach(d=>Object.keys(DATA[d]||{}).forEach(n=>names.add(n)));
   sel.innerHTML = [...names].map(n=>`<option>${n}</option>`).join('');
-  // 板块默认选最新交易日 rank1 的热点板块
+  // 板块默认选最新交易日 rank1 的热点板块(取dict key, 非value字段)
   const last = dates[dates.length-1];
-  const top1 = Object.values(DATA[last]||{}).sort((a,b)=>a.rank-b.rank)[0];
-  if(top1) sel.value = top1.name;
+  const topEntry = Object.entries(DATA[last]||{}).sort((a,b)=>a[1].rank-b[1].rank)[0];
+  if(topEntry) sel.value = topEntry[0];
   // 日期下拉：倒序（最新在前），默认选中最新交易日
   const ds = document.getElementById('dateSel');
   ds.innerHTML = [...dates].reverse().map(d=>`<option value="${d}">${d} 周${WEEK[new Date(d+'T12:00:00').getDay()]}</option>`).join('');
