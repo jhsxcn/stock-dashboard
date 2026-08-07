@@ -141,6 +141,7 @@ function showTrend(){
     xAxis:{type:'category',data:series.map(s=>s[0])},
     yAxis:{type:'value',name:'强度'},
     series:[{name:plate,type:'line',smooth:true,data:series.map(s=>s[1]),areaStyle:{opacity:.15},lineStyle:{width:3}}] }, true);
+  chartT.resize();
 }
 function showDay(){
   document.getElementById('trendCard').style.display='none'; document.getElementById('dayCard').style.display=''; document.getElementById('heatCard').style.display='none';
@@ -156,6 +157,7 @@ function showDay(){
     xAxis:{type:'value'}, yAxis:{type:'category',data:dayArr.map(p=>p[0]).reverse(),axisLabel:{fontSize:12}},
     series:[{type:'bar',data:dayArr.map(p=>({value:p[1].score,itemStyle:{color:PHASE_COLOR[p[1].phase]}})).reverse(),
       label:{show:true,position:'right',formatter:function(pp){const q=dayArr[dayArr.length-1-pp.dataIndex];return q?q[1].score:'';},fontSize:11,color:'#e8ecf4'}}] }, true);
+  chartD.resize();
 }
 function showHeat(){
   document.getElementById('trendCard').style.display='none'; document.getElementById('dayCard').style.display='none'; document.getElementById('heatCard').style.display='';
@@ -170,6 +172,7 @@ function showHeat(){
     yAxis:{type:'category',data:names,splitArea:{show:true}},
     visualMap:{min:0,max:30000,calculable:true,orient:'horizontal',left:'center',bottom:0,inRange:{color:['#2a3550','#0984e3','#e17055']}},
     series:[{type:'heatmap',data:data,label:{show:false}}] }, true);
+  chartH.resize();
 }
 init(); load();
 </script>
