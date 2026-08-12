@@ -1,0 +1,17 @@
+name: 📤 热铁盒自动部署
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy-rth:
+    runs-on: ubuntu-latest
+    container:
+      image: shangzheny/rth-host-helper:latest
+    steps:
+      - name: 部署到热铁盒
+        uses: rthsoftware/host-auto-deploy@master
+        env:
+          RTH_API_KEY: ${{ secrets.RTH_API_KEY }}
