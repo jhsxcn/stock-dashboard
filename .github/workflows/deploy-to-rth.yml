@@ -15,18 +15,18 @@ jobs:
       image: shangzheny/rth-host-helper:latest
     steps:
       - uses: actions/checkout@v4
-      - name: 精简history(热铁盒4MB限制)
+      - name: 精简history(热铁盒单文件4MB限制)
         run: |
           python3 -c "
           import json
           with open('rotation_stocks_history.json', encoding='utf-8') as f:
               d = json.load(f)
           dates = sorted(d.keys())
-          keep = dates[-250:]
+          keep = dates[-800:]
           sub = {k: d[k] for k in keep}
           with open('rotation_stocks_history.json', 'w', encoding='utf-8') as f:
               json.dump(sub, f, ensure_ascii=False, separators=(',', ':'))
-          print('history精简:', len(keep), '个交易日')
+          print('history精简:', len(keep), '个交易日, 覆盖', keep[0], '~', keep[-1])
           "
       - name: 部署到热铁盒
         uses: rthsoftware/host-auto-deploy@master
