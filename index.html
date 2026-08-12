@@ -254,7 +254,9 @@ function confirmPickDate(){
 function pickDate(d){
   curDate = d;
   document.getElementById('dateModal').style.display='none';
-  showDay();
+  // 当前视图跟随日期刷新
+  const heatVisible = document.getElementById('heatCard').style.display !== 'none';
+  if(heatVisible){ showHeat(); } else { showDay(); }
 }
 function showTrend(){
   document.getElementById('trendCard').style.display=''; document.getElementById('dayCard').style.display='none'; document.getElementById('heatCard').style.display='none';
@@ -292,7 +294,11 @@ function showDay(){
 }
 function showHeat(){
   document.getElementById('trendCard').style.display='none'; document.getElementById('dayCard').style.display='none'; document.getElementById('heatCard').style.display='';
-  const dates = Object.keys(DATA).sort().slice(-20);
+  const allDates = Object.keys(DATA).sort();
+  const end = curDate || allDates[allDates.length-1];
+  const endIdx = allDates.indexOf(end);
+  const startIdx = Math.max(0, endIdx - 19);  // 含end共20天
+  const dates = allDates.slice(startIdx, endIdx+1);
   const names = [];
   const seen = new Set();
   [...dates].reverse().forEach(d=>Object.entries(DATA[d]).sort((a,b)=>a[1].rank-b[1].rank).forEach(([n,p])=>{if(!seen.has(n)&&names.length<12){names.push(n);seen.add(n);}}));
@@ -308,7 +314,7 @@ function showHeat(){
     const p = DATA[dates[di]] && DATA[dates[di]][nm];
     return nm + '<br>强度 ' + pp.value[2] + (p ? ' · 当日名次 ' + p.rank : '');
   }}, grid:{left:80,right:20,top:10,bottom:60},
-    xAxis:{type:'category',boundaryGap:true,data:dates.map(d=>d.slice(5)),splitArea:{show:true},axisLabel:{interval:0,fontSize:11,align:'center',color:function(v,idx){return idx===dates.length-1?'#e17055':'#8b95ab';},fontWeight:function(v,idx){return idx===dates.length-1?'bold':'normal';},formatter:function(v,idx){return idx===dates.length-1?(v+'\n★今日'):v;},lineHeight:15}},
+    xAxis:{type:'category',boundaryGap:true,data:dates.map(d=>d.slice(5)),splitArea:{show:true},axisLabel:{interval:0,fontSize:11,align:'center',color:function(v,idx){return idx===dates.length-1?'#e17055':'#8b95ab';},fontWeight:function(v,idx){return idx===dates.length-1?'bold':'normal';},formatter:function(v,idx){return idx===dates.length-1?(v+'\n★'+(curDate?'选中':'今日')):v;},lineHeight:15}},
     yAxis:{type:'category',data:names,inverse:true,splitArea:{show:true}},
     visualMap:{min:vmin,max:vmax,calculable:false,orient:'horizontal',left:'center',bottom:0,text:['强','弱'],inRange:{color:['#1a2233','#2a3550','#0984e3','#e17055']}},
     series:[{type:'heatmap',data:data,label:{show:true,fontSize:10,color:'#e8ecf4',formatter:function(pp){return pp.value[2]>=1000?(pp.value[2]/1000).toFixed(1)+'k':''}}}] }, true);
