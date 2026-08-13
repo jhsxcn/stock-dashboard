@@ -1,0 +1,246 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>海赢智能选股</title>
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 12px;
+        }
+
+       .container {
+            width: 100%;
+            max-width: 800px;
+            /* 最大宽度 */
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #000000;
+        }
+
+        img {
+            vertical-align: middle;
+            height: 40px;
+            margin-left: 10px;
+        }
+
+       .controls {
+            text-align: center;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            padding: 0 10px; /* 添加内边距防止内容贴边 */
+        }
+
+        input,
+        select {
+            padding: 5px;
+            font-size: 14px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #333;
+            color: #ffffff;
+            max-width: 100%; /* 确保不会超出容器宽度 */
+            box-sizing: border-box; /* 包含padding在宽度内 */
+        }
+
+        /* 下拉列表特定样式调整 */
+        #keywordSelect {
+            min-width: 150px; /* 设置最小宽度 */
+            max-width: calc(100% - 20px); /* 最大宽度不超过容器减去边距 */
+        }
+
+        button {
+            padding: 5px 10px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-right: 3px;
+            border: none;
+            border-radius: 4px;
+            background-color: #000000;
+            color: #f1c40f;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: #000000;
+            transform: scale(1.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        th,
+        td {
+            border: 1px solid #000;
+            padding: 5px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #000000;
+            color: #f1c40f;
+        }
+
+       .序号 {
+            color: #f1c40f;
+        }
+
+       .container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #000000;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            box-sizing: border-box; /* 确保padding不增加总宽度 */
+        }
+
+        tr.highlighted {
+            background-color: #333; /* 高亮背景颜色，可根据需要调整 */
+        }
+
+        p {
+            display: inline;
+            margin-right: 10px;
+        }
+       .input-container {
+            width: 100%;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        #inputValue {
+            width: 100%;
+            height: 150px;
+            font-size: 16px;
+            padding: 10px 15px;
+            resize: vertical; /* 允许垂直调整大小 */
+            min-height: 50px; /* 最小高度 */
+            font-family: Arial, sans-serif; /* 保持字体一致 */
+            border: none;
+            border-radius: 4px;
+            background-color: #111;
+            color: #ffffff;
+            box-sizing: border-box; /* 确保padding不影响总高度 */
+        }
+
+        /* 分隔线样式 */
+       .divider {
+            width: 100%;
+            height: 1px;
+            background-color: #444;
+            margin: 10px 0;
+        }
+
+        /* 响应式调整 - 在小屏幕上优化显示 */
+        @media (max-width: 600px) {
+           .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            #keywordSelect, button,.controls label {
+                margin-right: 0;
+                margin-bottom: 5px;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+      
+        <div class="controls">
+            <select id="keywordSelect">
+                  <option value="无">无</option>
+                <option value="涨停，去除st，去除北交所">涨停</option>
+                <option value="跌停，去除st，去除北交所">跌停</option>
+                <option value="炸板，去除st，去除北交所">炸板</option>
+                <option value="曾跌停，去除st，去除北交所">曾跌停</option>
+                <option value="开盘大跌，去除st，去除北交所">开盘大跌</option>
+                <option value="人气前十，去除st，去除北交所">人气前十</option>
+                <option value="委比前十，去除st，去除北交所">委比前十</option>
+                <option
+                    value="开盘成交量与昨日总量占比大于5%，且开盘涨幅大于1%小于9.5%；去除st，竞价涨幅，去除涨跌幅小于0%，涨跌幅，去除科创板">
+                    竞价</option>
+                <!-- 保存的问句将在这里动态添加 -->
+            </select>
+            <label for="inputValue">请选股:</label>
+            <button id="fetchButton" style="padding: 5px 10px; font-size: 14px; cursor: pointer; margin-right: 10px; border: none; border-radius: 4px; background-color: #000000; color: #ffffff; transition: background-color 0.3s, transform 0.2s;">
+                    选股
+                </button>
+    
+            <button id="saveQueryButton">保存问句</button>
+            <button id="exportButton">导出代码</button>
+            
+            <div style="width: 100%; margin-top: 10px;">
+                <label for="inputValue">请输入选股内容:</label>
+                <textarea id="inputValue" placeholder="请输入内容" rows="3"></textarea>
+            </div>
+        </div>
+        <table id="stockTable">
+            <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>股票代码</th>
+                    <th>股票名称</th>
+                    <th>当前价格</th>
+                    <th>涨跌幅</th>
+                    <th>换手率</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 动态数据将插入这里 -->
+            </tbody>
+        </table>
+    </div>
+    <script src="js/wcc.js"></script>
+</body>
+<div style="width: 100%; max-width: 800px; margin: 20px auto; padding: 15px; background-color: #000000; border-radius: 8px; font-size: 12px; color: #bbb;">
+    <p style="margin: 5px 0;"><strong>数据来源说明：</strong>本页面数据来源于<a href="https://www.iwencai.com/unifiedwap/home/index" target="_blank" style="color: #000000; text-decoration: underline;">同花顺问财</a>，仅供参考，不构成任何投资建议。</p>
+    <p style="margin: 5px 0;">欢迎使用正版<a href="https://www.iwencai.com/unifiedwap/home/index" target="_blank" style="color: #000000; text-decoration: underline;">同花顺问财</a>获取更专业、更全面的财经数据服务。</p>
+    <p style="margin: 5px 0;"><strong>注意事项：</strong></p>
+    <ul style="margin: 5px 0; padding-left: 20px;">
+        <li>股票投资有风险，入市需谨慎</li>
+        <li>本工具仅提供数据查询功能，不保证数据的实时性和准确性</li>
+        <li>据此操作产生的任何投资风险，由使用者自行承担</li>
+        <li>未经授权，不得擅自复制、传播本页面内容</li>
+    </ul>
+    
+    <p style="width: 100%; margin: 10px auto 0; padding: 10px; background-color: #000000; border-radius: 4px; font-size: 12px; color: #ff9900; text-align: center;">
+        声明：本页面内容仅供学习使用，下载后请于24小时内删除，请勿用于商业用途，侵权必究
+    </p>
+</div>
+    
+    
+</html>
+    
