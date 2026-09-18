@@ -73911,111 +73911,111 @@
  "2026-09-18": {
   "华为概念": {
    "rank": 1,
-   "score": 3750,
-   "fund": 12.22,
-   "pct": 15,
+   "score": 4000,
+   "fund": 9.79,
+   "pct": 16,
    "max_lb": 4,
    "src": "wencai",
-   "phase": "启动"
+   "phase": "高潮"
   },
   "芯片概念": {
    "rank": 2,
-   "score": 3100,
-   "fund": 25.88,
-   "pct": 16,
+   "score": 3400,
+   "fund": 24.77,
+   "pct": 18,
    "max_lb": 2,
    "src": "wencai",
-   "phase": "启动"
+   "phase": "高潮"
   },
   "专精特新": {
    "rank": 3,
-   "score": 3100,
-   "fund": 4.33,
-   "pct": 12,
+   "score": 3250,
+   "fund": 3.67,
+   "pct": 13,
    "max_lb": 4,
    "src": "wencai",
-   "phase": "启动"
+   "phase": "高潮"
   },
   "人工智能": {
    "rank": 4,
-   "score": 3100,
-   "fund": 0.32,
-   "pct": 16,
+   "score": 2950,
+   "fund": -0.85,
+   "pct": 15,
    "max_lb": 2,
    "src": "wencai",
-   "phase": "启动"
+   "phase": "震荡"
+  },
+  "机器人概念": {
+   "rank": 5,
+   "score": 2500,
+   "fund": 16.39,
+   "pct": 12,
+   "max_lb": 2,
+   "src": "wencai",
+   "phase": "震荡"
   },
   "跨境电商": {
-   "rank": 5,
+   "rank": 6,
    "score": 2450,
-   "fund": -2.45,
+   "fund": -2.7,
    "pct": 7,
    "max_lb": 4,
    "src": "wencai",
-   "phase": "启动"
+   "phase": "震荡"
+  },
+  "西部大开发": {
+   "rank": 7,
+   "score": 2350,
+   "fund": 13.2,
+   "pct": 9,
+   "max_lb": 3,
+   "src": "wencai",
+   "phase": "震荡"
+  },
+  "物业管理": {
+   "rank": 8,
+   "score": 2300,
+   "fund": 2.3,
+   "pct": 8,
+   "max_lb": 3,
+   "src": "wencai",
+   "phase": "冰点"
   },
   "消费电子概念": {
-   "rank": 6,
+   "rank": 9,
    "score": 2300,
-   "fund": 1.29,
+   "fund": 0.59,
    "pct": 6,
    "max_lb": 4,
    "src": "wencai",
-   "phase": "启动"
-  },
-  "风电": {
-   "rank": 7,
-   "score": 2150,
-   "fund": -0.34,
-   "pct": 5,
-   "max_lb": 4,
-   "src": "wencai",
-   "phase": "启动"
+   "phase": "冰点"
   },
   "数据中心(AIDC)": {
-   "rank": 8,
-   "score": 2050,
-   "fund": 0.94,
-   "pct": 9,
+   "rank": 10,
+   "score": 2200,
+   "fund": 0.38,
+   "pct": 10,
    "max_lb": 2,
    "src": "wencai",
-   "phase": "启动"
-  },
-  "机器人概念": {
-   "rank": 9,
-   "score": 2050,
-   "fund": 15.27,
-   "pct": 9,
-   "max_lb": 2,
-   "src": "wencai",
-   "phase": "启动"
+   "phase": "冰点"
   },
   "充电桩": {
-   "rank": 10,
-   "score": 2050,
-   "fund": 0.15,
-   "pct": 9,
+   "rank": 11,
+   "score": 2200,
+   "fund": -0.31,
+   "pct": 10,
    "max_lb": 2,
    "src": "wencai",
-   "phase": "启动"
+   "phase": "冰点"
   },
   "高端装备": {
-   "rank": 11,
-   "score": 2050,
-   "fund": 4.35,
-   "pct": 5,
-   "max_lb": 4,
-   "src": "wencai",
-   "phase": "启动"
-  },
-  "智能穿戴": {
    "rank": 12,
-   "score": 2000,
-   "fund": 1.12,
-   "pct": 4,
+   "score": 2200,
+   "fund": 3.8,
+   "pct": 6,
    "max_lb": 4,
    "src": "wencai",
-   "phase": "启动"
+   "phase": "冰点"
   }
  }
 }
