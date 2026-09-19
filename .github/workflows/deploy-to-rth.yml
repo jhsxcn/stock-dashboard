@@ -32,5 +32,6 @@ jobs:
         uses: rthsoftware/host-auto-deploy@master
         with:
           site: haiying.seamining.top
+          outdir: .
         env:
           RTH_API_KEY: ${{ secrets.RTH_API_KEY }}
