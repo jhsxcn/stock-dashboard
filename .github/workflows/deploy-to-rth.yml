@@ -15,23 +15,30 @@ jobs:
       image: shangzheny/rth-host-helper:latest
     steps:
       - uses: actions/checkout@v4
-      - name: 精简history(热铁盒单文件4MB限制)
+      - name: 组装站点目录(history精简550天, 单文件<4MB)
         run: |
           python3 -c "
-          import json
-          with open('rotation_stocks_history.json', encoding='utf-8') as f:
-              d = json.load(f)
+          import json, os, shutil
+          os.makedirs('site', exist_ok=True)
+          for f in ['index.html', 'echarts.min.js', 'rotation_data.json', 'rotation_stocks.json']:
+              shutil.copy(f, 'site/')
+          with open('rotation_stocks_history.json', encoding='utf-8') as fp:
+              d = json.load(fp)
           dates = sorted(d.keys())
-          keep = dates[-600:]
+          keep = dates[-550:]
           sub = {k: d[k] for k in keep}
-          with open('rotation_stocks_history.json', 'w', encoding='utf-8') as f:
-              json.dump(sub, f, ensure_ascii=False, separators=(',', ':'))
-          print('history精简:', len(keep), '个交易日, 覆盖', keep[0], '~', keep[-1])
+          with open('site/rotation_stocks_history.json', 'w', encoding='utf-8') as fp:
+              json.dump(sub, fp, ensure_ascii=False, separators=(',', ':'))
+          print('history精简:', len(keep), '天,', keep[0], '~', keep[-1])
+          for f in sorted(os.listdir('site')):
+              sz = os.path.getsize('site/' + f)
+              print(f'  {f}: {sz/1024/1024:.2f}MB')
+              assert sz < 3.5*1024*1024, f + ' 超过3.5MB!'
           "
       - name: 部署到热铁盒
         uses: rthsoftware/host-auto-deploy@master
         with:
           site: haiying.seamining.top
-          outdir: .
+          outdir: site
         env:
           RTH_API_KEY: ${{ secrets.RTH_API_KEY }}
