@@ -1,7 +1,8 @@
 name: 📊 板块强度轮动周期
+# 2026-09-19: 已禁用定时触发 —— repo 内 generate_rotation.py 为 zzshare 旧口径,
+# 与服务器 v2 问财免token链路(18:10 cron)口径冲突, 停用避免数据互相覆盖。
+# 数据生成统一走服务器; 本 workflow 仅保留手动触发(备用应急)。
 on:
-  schedule:
-    - cron: '0 10 * * 1-5'
   workflow_dispatch:
 permissions:
   contents: write
