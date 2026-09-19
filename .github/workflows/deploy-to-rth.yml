@@ -35,10 +35,10 @@ jobs:
               print(f'  {f}: {sz/1024/1024:.2f}MB')
               assert sz < 3.5*1024*1024, f + ' 超过3.5MB!'
           "
-      - name: 部署到热铁盒
-        uses: rthsoftware/host-auto-deploy@master
-        with:
-          site: haiying.seamining.top
-          outdir: site
+      - name: 部署到热铁盒(直接deno, 绕开action的cwd bug)
+        run: |
+          pwd
+          ls site/
+          deno -Ar https://host.retiehe.com/cli deploy --site haiying.seamining.top --outdir site
         env:
           RTH_API_KEY: ${{ secrets.RTH_API_KEY }}
