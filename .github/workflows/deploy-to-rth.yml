@@ -22,7 +22,7 @@ jobs:
           with open('rotation_stocks_history.json', encoding='utf-8') as f:
               d = json.load(f)
           dates = sorted(d.keys())
-          keep = dates[-800:]
+          keep = dates[-600:]
           sub = {k: d[k] for k in keep}
           with open('rotation_stocks_history.json', 'w', encoding='utf-8') as f:
               json.dump(sub, f, ensure_ascii=False, separators=(',', ':'))
@@ -30,5 +30,7 @@ jobs:
           "
       - name: 部署到热铁盒
         uses: rthsoftware/host-auto-deploy@master
+        with:
+          site: haiying.seamining.top
         env:
           RTH_API_KEY: ${{ secrets.RTH_API_KEY }}
