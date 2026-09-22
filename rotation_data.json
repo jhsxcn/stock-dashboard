@@ -74071,5 +74071,87 @@
    "src": "kpl",
    "phase": "冰点"
   }
+ },
+ "2026-09-22": {
+  "AI应用": {
+   "rank": 1,
+   "score": 8048,
+   "fund": 49.69,
+   "pct": 1.338,
+   "src": "kpl",
+   "phase": "扩散"
+  },
+  "芯片": {
+   "rank": 2,
+   "score": 6187,
+   "fund": -13.49,
+   "pct": 0.168,
+   "src": "kpl",
+   "phase": "扩散"
+  },
+  "医药": {
+   "rank": 3,
+   "score": 5196,
+   "fund": -11.08,
+   "pct": 0.587,
+   "src": "kpl",
+   "phase": "高潮"
+  },
+  "算力": {
+   "rank": 4,
+   "score": 3988,
+   "fund": 8.07,
+   "pct": 0.47,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "端侧AI": {
+   "rank": 5,
+   "score": 3473,
+   "fund": 7.68,
+   "pct": 1.042,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "文化传媒": {
+   "rank": 6,
+   "score": 2126,
+   "fund": 15.22,
+   "pct": 1.549,
+   "src": "kpl",
+   "phase": "退潮"
+  },
+  "通信": {
+   "rank": 7,
+   "score": 2055,
+   "fund": -82.24,
+   "pct": 0.186,
+   "src": "kpl",
+   "phase": "退潮"
+  },
+  "股权转让": {
+   "rank": 8,
+   "score": 1788,
+   "fund": -2.7,
+   "pct": 0.079,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "汽车零部件": {
+   "rank": 9,
+   "score": 1197,
+   "fund": 8.15,
+   "pct": 0.055,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "医疗器械": {
+   "rank": 10,
+   "score": 1156,
+   "fund": -4.54,
+   "pct": 0.815,
+   "src": "kpl",
+   "phase": "退潮"
+  }
  }
 }
