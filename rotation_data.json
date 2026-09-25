@@ -74317,5 +74317,115 @@
    "src": "kpl",
    "phase": "冰点"
   }
+ },
+ "2026-09-25": {
+  "人工智能": {
+   "rank": 1,
+   "score": 3600,
+   "fund": 2.97,
+   "pct": 12,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 5
+  },
+  "海峡两岸": {
+   "rank": 2,
+   "score": 3350,
+   "fund": 4.99,
+   "pct": 13,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 4
+  },
+  "DeepSeek概念": {
+   "rank": 3,
+   "score": 2850,
+   "fund": 2.2,
+   "pct": 7,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 5
+  },
+  "数字经济": {
+   "rank": 4,
+   "score": 2750,
+   "fund": 2.16,
+   "pct": 7,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 5
+  },
+  "文化传媒概念": {
+   "rank": 5,
+   "score": 2700,
+   "fund": -1.2,
+   "pct": 6,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 5
+  },
+  "华为概念": {
+   "rank": 6,
+   "score": 2700,
+   "fund": 2.12,
+   "pct": 6,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 5
+  },
+  "西部大开发": {
+   "rank": 7,
+   "score": 2650,
+   "fund": -1.36,
+   "pct": 7,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 5
+  },
+  "AI应用": {
+   "rank": 8,
+   "score": 2600,
+   "fund": -2.17,
+   "pct": 6,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 5
+  },
+  "跨境电商": {
+   "rank": 9,
+   "score": 2450,
+   "fund": 1.43,
+   "pct": 7,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 4
+  },
+  "体育产业": {
+   "rank": 10,
+   "score": 2450,
+   "fund": 0.19,
+   "pct": 5,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 5
+  },
+  "机器人概念": {
+   "rank": 11,
+   "score": 2450,
+   "fund": 1.98,
+   "pct": 7,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 4
+  },
+  "福建自贸区": {
+   "rank": 12,
+   "score": 2300,
+   "fund": 2.8,
+   "pct": 6,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 4
+  }
  }
 }
