@@ -74893,5 +74893,115 @@
    "phase": "启动",
    "max_lb": 2
   }
+ },
+ "2026-10-05": {
+  "创投": {
+   "rank": 1,
+   "score": 3200,
+   "fund": -1.78,
+   "pct": 6,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 7
+  },
+  "新能源汽车": {
+   "rank": 2,
+   "score": 2900,
+   "fund": -1.2,
+   "pct": 10,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 4
+  },
+  "AI语料": {
+   "rank": 3,
+   "score": 2650,
+   "fund": -0.82,
+   "pct": 3,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 7
+  },
+  "文化传媒概念": {
+   "rank": 4,
+   "score": 2650,
+   "fund": -0.68,
+   "pct": 3,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 7
+  },
+  "比亚迪概念": {
+   "rank": 5,
+   "score": 2350,
+   "fund": -0.99,
+   "pct": 7,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 4
+  },
+  "锂电池概念": {
+   "rank": 6,
+   "score": 2250,
+   "fund": -0.56,
+   "pct": 7,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 3
+  },
+  "专精特新": {
+   "rank": 7,
+   "score": 2050,
+   "fund": 0.72,
+   "pct": 9,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 2
+  },
+  "储能": {
+   "rank": 8,
+   "score": 2050,
+   "fund": -2.56,
+   "pct": 9,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 2
+  },
+  "军民融合": {
+   "rank": 9,
+   "score": 1900,
+   "fund": -0.09,
+   "pct": 4,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 4
+  },
+  "风电": {
+   "rank": 10,
+   "score": 1900,
+   "fund": -0.31,
+   "pct": 8,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 2
+  },
+  "绿色电力": {
+   "rank": 11,
+   "score": 1900,
+   "fund": -2.82,
+   "pct": 6,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 3
+  },
+  "华为概念": {
+   "rank": 12,
+   "score": 1850,
+   "fund": -1.5,
+   "pct": 7,
+   "src": "wencai_fallback",
+   "phase": "启动",
+   "max_lb": 2
+  }
  }
 }
