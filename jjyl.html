@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>海赢选股移动版</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="海赢选股移动版">
+<meta name="theme-color" content="#1763d6">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<script src="BiddingSelector.js"></script>
+<style>
+:root{--bg:#0c0913;--bg-card:#120d1c;--text:#f1ecfb;--muted:#9b8fb5;--border:rgba(168,85,247,0.22);
+--border-strong:rgba(245,185,66,0.32);--accent:#a855f7;--red:#ff5b6e;--green:#2dd4a7;--name-green:#2dd4a7;
+--band:rgba(40,28,64,0.42);}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:radial-gradient(900px 600px at 88% -8%,rgba(168,85,247,0.16),transparent 60%),radial-gradient(800px 600px at -6% 108%,rgba(245,185,66,0.10),transparent 55%),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;font-size:13px}
+body.dark{--bg:#0c0913;--bg-card:#120d1c;--text:#f1ecfb;--muted:#9b8fb5;--border:rgba(168,85,247,0.22);
+--border-strong:rgba(245,185,66,0.32);--accent:#a855f7;--red:#ff5b6e;--green:#2dd4a7;--name-green:#2dd4a7;--band:rgba(40,28,64,0.42)}
+.head{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;
+background:var(--bg-card);border-bottom:1px solid var(--border-strong);padding:8px 10px;gap:8px}
+.head-left{min-width:0}
+.title{font-size:16px;font-weight:800;letter-spacing:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:linear-gradient(90deg,#f7d27a,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.subtitle{font-size:11px;color:var(--muted);margin-top:2px}
+.live{font-size:11px;margin-top:2px;color:var(--muted)}
+.live .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle;background:var(--muted)}
+.live.on .dot{background:var(--green);box-shadow:0 0 5px var(--green)}
+.live.on{color:var(--green)}
+.btns{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.btn-icon{width:36px;height:36px;border:1px solid var(--border-strong);border-radius:8px;
+background:var(--bg-card);color:var(--text);font-size:16px;cursor:pointer;display:flex;
+align-items:center;justify-content:center}
+.btn-icon:active{transform:scale(.94)}
+.em-his{box-shadow:0 0 0 2px var(--accent,#ff4d4f);border-color:var(--accent,#ff4d4f)}
+/* 东财日期键：普通按钮（不依赖原生 date 控件，手机 WebView 必定可点） */
+.em-date-btn{display:inline-flex;align-items:center;gap:3px;min-width:64px;height:36px;padding:0 8px;
+  font-size:12px;font-family:inherit;line-height:1;white-space:nowrap}
+/* 自建日期选择弹层（纯 DOM，不依赖原生 date input） */
+.em-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9998;display:none;
+  align-items:center;justify-content:center}
+.em-mask.show{display:flex}
+.em-pk{background:var(--bg-card);color:var(--text);border:1px solid var(--border-strong);
+  border-radius:12px;padding:16px;width:min(320px,86vw);box-shadow:0 8px 30px rgba(0,0,0,.35)}
+.em-pk h3{margin:0 0 12px;font-size:15px;font-weight:600}
+.em-pk .quick{display:flex;gap:8px;margin-bottom:12px}
+.em-pk .quick button{flex:1;height:32px;font-size:12px;border-radius:8px;
+  border:1px solid var(--border-strong);background:var(--bg-card);color:var(--text)}
+.em-cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.em-nav{width:36px;height:36px;border-radius:8px;border:1px solid var(--border-strong);
+  background:var(--bg-card);color:var(--text);font-size:18px;line-height:1}
+.em-ym{font-size:15px;font-weight:600}
+.em-tip{font-size:11px;color:#8a8a8a;margin:0 0 8px;text-align:center;line-height:1.4}
+.em-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:12px}
+.em-cal .em-w{text-align:center;font-size:11px;color:var(--muted);padding:4px 0}
+.em-cal .em-d{height:34px;border:1px solid transparent;border-radius:7px;background:var(--bg-card);
+  color:var(--text);font-size:13px;display:flex;align-items:center;justify-content:center;padding:0;font-family:inherit}
+.em-cal .em-d:active{background:var(--border-strong)}
+.em-cal .em-empty{background:transparent;border:none}
+.em-cal .em-today{border-color:var(--accent,#ff4d4f);color:var(--accent,#ff4d4f)}
+.em-cal .em-sel{background:var(--accent,#ff4d4f);color:#fff;border-color:var(--accent,#ff4d4f)}
+/* AI 快照日专用：有快照=金边可选；无快照=置灰不可点 */
+.em-cal .em-has{border-color:#f5b942;color:#f5b942;font-weight:600}
+.em-cal .em-dis{opacity:.3}
+.em-pk .acts{display:flex;gap:8px}
+.em-pk .acts button{flex:1;height:40px;border-radius:8px;border:1px solid var(--border-strong);
+  background:var(--bg-card);color:var(--text);font-size:14px}
+.head-ctl{height:36px;padding:0 8px;border:1px solid var(--border-strong);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:13px;font-family:inherit;outline:none}
+.head-ctl option{background:var(--bg-card);color:var(--text)}
+.src-date::-webkit-calendar-picker-indicator{filter:invert(.85);cursor:pointer}
+.wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px}
+table{border-collapse:collapse;width:max-content;min-width:100%;font-size:12px}
+thead th{position:sticky;top:0;background:var(--bg-card);border:1px solid var(--border);
+padding:6px 7px;white-space:nowrap;text-align:right;cursor:pointer;user-select:none;font-weight:600;z-index:2}
+thead th.lft{text-align:left}
+thead th .ar{font-size:9px;color:var(--muted);margin-left:2px}
+thead th.stk{position:sticky;left:0;z-index:3;width:var(--stk-w,72px);min-width:var(--stk-w,72px);max-width:var(--stk-w,72px)}
+thead th.nm{position:sticky;left:var(--nm-left,136px);z-index:3;max-width:118px;overflow:hidden;text-overflow:ellipsis}
+tbody td{border:1px solid var(--border);padding:5px 7px;white-space:nowrap;text-align:center}
+tbody td.lft{text-align:center}
+tbody td.stk{position:sticky;left:0;background:var(--bg-card);z-index:1;font-weight:600;width:var(--stk-w,72px);min-width:var(--stk-w,72px);max-width:var(--stk-w,72px)}
+tbody td.nm{position:sticky;left:var(--nm-left,136px);background:var(--bg-card);z-index:1;max-width:118px;overflow:hidden;text-overflow:ellipsis}
+tbody tr:nth-child(even) td{background:var(--band)}
+tbody tr:nth-child(even) td.stk,tbody tr:nth-child(even) td.nm{background:var(--band)}
+.code-link{color:#fff;text-decoration:none;cursor:pointer}
+.code-gold{color:#f7d27a!important}
+.name-link{color:var(--text);cursor:pointer;font-weight:600}
+.name-green .name-link{color:var(--name-green)}
+.in{color:var(--red)} .out{color:var(--green)}
+.pos{color:var(--red)} .neg{color:var(--green)}
+.turn-hi{color:var(--green);font-weight:600}
+.turn-mid{color:var(--green)}
+.vr-hi{color:var(--green);font-weight:600}
+.vr-mid{color:var(--green)}
+.dim{color:var(--muted)}
+.note{font-size:11px;color:var(--muted);padding:8px 10px;line-height:1.6}
+.badge{display:inline-block;background:var(--accent);color:#fff;border-radius:10px;font-size:11px;padding:1px 7px;margin-left:6px}
+.addbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 10px;background:var(--bg-card);border-bottom:1px solid var(--border)}
+.addbar input{flex:1;min-width:150px;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;outline:none}
+.addbar input::placeholder{color:var(--muted)}
+.addbar button{padding:8px 14px;border:1px solid var(--border-strong);border-radius:8px;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+.addbar button:active{transform:scale(.96)}
+.addbar .hint{width:100%;font-size:11px;color:var(--muted);line-height:1.5}
+.wencaibar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 10px;background:var(--bg-card);border-bottom:1px solid var(--border)}
+.wencaibar select{flex:1;min-width:120px;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;outline:none}
+.wencaibar textarea{flex:1 1 100%;min-width:150px;height:46px;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;outline:none;resize:vertical;font-family:inherit}
+.wencaibar button{padding:8px 12px;border:1px solid var(--border-strong);border-radius:8px;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+.wencaibar button.ghost{background:var(--bg-card);color:var(--text)}
+.wencaibar button:active{transform:scale(.96)}
+.wencaibar .status{width:100%;font-size:11px;color:var(--muted);line-height:1.5;min-height:14px}
+</style>
+</head>
+<body>
+<div class="head">
+  <div class="head-left">
+    <div class="title">海赢选股移动版 <span class="badge" id="cnt">0</span></div>
+    <div class="subtitle" id="sub">—</div>
+    <div class="live off" id="live"><span class="dot"></span><span id="liveTxt">盘后快照（开盘5指标为09:26竞价数据）</span></div>
+  </div>
+  <div class="btns">
+    <select id="srcSel" class="head-ctl" onchange="onSrcChange()" title="数据源"><option value="wencai" selected>问财</option><option value="em">东财</option><option value="wenda">问达</option><option value="yizhi">一字</option><option value="ai">AI</option></select>
+    <button class="btn-icon em-date-btn" id="emDateBtn" style="display:none" title="东财选股日期（按问句回测所选日期，非今日即历史回测）" onclick="openEmDatePicker()">&#128197; <span id="emDateTxt">今日</span></button>
+    <button class="btn-icon em-date-btn" id="aiDateBtn" style="display:none" title="AI 竞价选股日期（只读已有快照的交易日，非回测计算）" onclick="openAiDatePicker()">&#128197; <span id="aiDateTxt">最新</span></button>
+    <button class="btn-icon" onclick="location.reload()" title="刷新数据">&#128260;</button>
+    <button class="btn-icon" onclick="exportToTdx()" title="加入通达信自定义板块">&#128226;</button>
+  </div>
+</div>
+<div class="wencaibar">
+  <select id="wencaiSaved" onchange="onPickSaved(this.value)"><option value="">已保存问句…</option></select>
+  <button class="ghost" onclick="delQuery()" title="删除选中的已保存问句">&#128465; 删除</button>
+  <textarea id="wencaiInput" placeholder="输入问财问句，如：涨停，去除st，去除北交所&#10;竞价公式：主板或创业板，非ST，非新股，竞价涨幅3到8，竞价量比大于9.7，竞价实际换手率大于0.09%，竞价金额/昨日成交额大于3%，竞价金额/昨日竞价金额大于3"></textarea>
+  <button onclick="runPick()">&#128269; 选股</button>
+  <button class="ghost" onclick="saveQuery()">&#128190; 保存问句</button>
+  <button class="ghost" onclick="exportCodes()">&#8595; 导出代码</button>
+  <div class="status" id="wencaiStatus">输入问财问句后点【选股】→ 自动填充 22 列（行情/资金流实时刷新）；也可直接在下方手动添加代码。</div>
+</div>
+<div class="addbar">
+  <input id="manualInput" placeholder="输入代码手动加自选，如 600152 002074（空格分隔）" onkeydown="if(event.key==='Enter')addManualCodes(this.value)">
+  <button onclick="addManualCodes(document.getElementById('manualInput').value)">&#10133; 添加</button>
+  <span class="hint">手动添加的代码：行情(腾讯)+资金流(新浪，与「涨停接力-2.1.xls」同源)自动刷新</span>
+</div>
+<div class="wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+<div class="note">行情/换手率/量比=腾讯源 ｜ 资金流=新浪四档<br>
+&#128204; 代码点东方财富 · 名称点通达信 · 入(红)出(绿) · 主净比%/换手率%/量比 同绿→名称绿 · 表头点选排序 · 成交额/换手率/量比=腾讯自选股源(sp37/38/49，盘后仍有值) · <b>盘中实时</b>：行情=腾讯 · 资金流8档=新浪代理(与涨停接力-2.1.xls同源，仅交易日09:25-15:00自动刷新，开盘5指标来自问财选股/历史归档）</div>
+
+<script>
+var ROWS = [];
+var META = {"date": "2026-09-30", "archives": [], "demo": false};
+
+// ===================== 数据源：问财 / 东财 / 问达 =====================
+var CUR_SRC = 'wencai';   // wencai(问财) | em(东财) | wenda(问达)，默认问财（海赢选股原功能不变）
+
+// 跨域策略（关键）：
+//  · file:// 或 content:// 本地文件 → 源为 opaque(null)，问财(ACAO:*)与东财(ACAO:null)直连 fetch 可用，保持原逻辑；
+//  · http(s) 托管页（如本地静态服务器 127.0.0.1、服务器 111.231.79.7）→ 东财 ACAO:null 不匹配该源会失败，
+//    改用服务器 JSONP 代理(/pq/wencai、/pq/em，script 标签，不受 CORS 限制)。
+var USE_JSONP = !(location.protocol==='file:' || location.protocol==='content:' || location.hostname==='');
+var API_BASE  = (location.hostname==='111.231.79.7') ? '' : 'http://111.231.79.7';
+
+// ==================================================================
+//  RTH / GitHub Pages 静态托管适配（新增，不影响原有逻辑）
+// ------------------------------------------------------------------
+//  页面托管到 https 后，http://111.231.79.7 的请求会被浏览器按
+//  「混合内容(mixed content)」全部拦截，故各通道需改用 https 地址。
+//  下面三个常量留空 = 维持原行为（服务器代理）；填了 = 走新地址。
+// ==================================================================
+var WENDA_ENDPOINT = 'https://stock-screen-efvfnufnrv.cn-hangzhou.fcapp.run/wenda';  // 问达：阿里云 FC https 后端（stock-screen 函数）
+var WENCAI_ENDPOINT = '';  // 问财：留空可用直连（已实测 CORS 全开，无需后端）
+var API_BASE_HTTPS  = '';  // 其余通道(东财/AI)：https 版服务器地址，如 https://stock.你的域名
+if (API_BASE_HTTPS) API_BASE = API_BASE_HTTPS;
+// https 页面 + 未配置 https 后端 → 提前判定为不可用，避免白等 15 秒
+var _httpsPageNoBackend = (location.protocol === 'https:' && !API_BASE_HTTPS);
+// JSONP 加载（script 标签，不受 CORS/file:// 限制；回调执行后自动移除 script）
+function jsonp(url, cbName, onDone){
+  var s=document.createElement('script');
+  s.src=url+(url.indexOf('?')>=0?'&':'?')+'cb='+encodeURIComponent(cbName);
+  window[cbName]=function(d){ try{delete window[cbName];}catch(e){} try{s.parentNode.removeChild(s);}catch(e){} onDone(d); };
+  s.onerror=function(){ try{delete window[cbName];}catch(e){} try{s.parentNode.removeChild(s);}catch(e){} onDone(null); };
+  document.body.appendChild(s);
+}
+
+function fmtDateLocal(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+var EM_DATE = fmtDateLocal(new Date());   // 东财回测所选日期（自建弹层写入，不依赖原生 date input）
+function onSrcChange(){
+  CUR_SRC = document.getElementById('srcSel').value;
+  // ⚠️ 两个日期键目标不同，绝不共用：
+  //   东财 = 按问句「计算」所选日期的回测结果（任意日期可算，源站实时算）；
+  //   AI   = 只读服务器「已抓取并存下来的快照」（只有有快照的交易日可读，没有就是没有）。
+  var eBtn = document.getElementById('emDateBtn');
+  var aBtn = document.getElementById('aiDateBtn');
+  if(eBtn) eBtn.style.display = (CUR_SRC==='em') ? '' : 'none';
+  if(aBtn) aBtn.style.display = (CUR_SRC==='ai') ? '' : 'none';
+  if(CUR_SRC==='em'){ if(!EM_DATE) EM_DATE=fmtDateLocal(new Date()); onEmDateChange(EM_DATE); }
+  if(CUR_SRC==='ai'){ loadAiSnapshot(); updateAiDateBtn(); }   // 预热快照日期表
+  var ta = document.getElementById('wencaiInput');
+  if(CUR_SRC==='ai'){
+    ta.placeholder='【AI 竞价选股】读取 ai.jiaoyi-gou.com/?p=12 已抓取的竞价选股快照（服务器 jingjia.json），无需输入问句；📅 只能选「已有快照」的交易日。';
+    ta.value = '';
+  } else if(CUR_SRC==='em'){
+    ta.placeholder='输入东财问句，如：主板或创业板，非ST，非新股，开盘涨幅>9，开盘量比>9，开盘换手Z>0.9\n支持选历史日期（集合竞价涨跌幅/换手率/量比按所选日期返回）';
+  } else if(CUR_SRC==='wenda'){
+    ta.placeholder='输入问达问句，如：主板或创业板，非ST，非新股，竞价涨幅3到8，竞价量比>9\n（问达使用通达信私有 callTQL 接口，经服务器代理落表，支持盘中资金流刷新）';
+  } else if(CUR_SRC==='yizhi'){
+    ta.placeholder='【一字选股专用】直接调用竞价一字选股模块，按固定逻辑执行选股。';
+    // 切换到时，清空输入框
+    ta.value = '';
+  } else {
+    ta.placeholder='输入问财问句，如：涨停，去除st，去除北交所\n竞价公式：主板或创业板，非ST，非新股，竞价涨幅3到8，竞价量比大于9.7，竞价实际换手率大于0.09%，竞价金额/昨日成交额大于3%，竞价金额/昨日竞价金额大于3';
+  }
+}
+// ===== 东财自建日期弹层（纯按钮网格日历，不依赖任何原生表单控件，桌面/手机通吃） =====
+var EM_PICK_Y=2026, EM_PICK_M=9;
+function lastTradeDate(){   // 最近一个“肯定有竞价数据”的交易日：今天往前4天再跳过周末，避开“本月近期日东财回退最新”的陷阱
+  var d=new Date(); d.setDate(d.getDate()-4);
+  while(d.getDay()===0||d.getDay()===6) d.setDate(d.getDate()-1);
+  return d;
+}
+function openEmDatePicker(){
+  var cur;
+  if(EM_DATE===fmtDateLocal(new Date())) cur=lastTradeDate();   // 默认停在“最近交易日所在月”，避免本月近期日东财回退造成“回测无效”错觉
+  else cur=new Date(EM_DATE+'T00:00:00');
+  if(isNaN(cur.getTime())) cur=lastTradeDate();
+  EM_PICK_Y=cur.getFullYear(); EM_PICK_M=cur.getMonth()+1;
+  document.getElementById('emMask').classList.add('show');
+  renderEmCal();
+}
+function renderEmCal(){
+  var y=EM_PICK_Y, m=EM_PICK_M;
+  document.getElementById('emYM').textContent=y+'年'+String(m).padStart(2,'0')+'月';
+  var cal=document.getElementById('emCal'); cal.innerHTML='';
+  var wk=['日','一','二','三','四','五','六'];
+  wk.forEach(function(w){ var d=document.createElement('div'); d.className='em-w'; d.textContent=w; cal.appendChild(d); });
+  var first=new Date(y, m-1, 1).getDay();   // 当月1号星期（0=日）
+  var days=new Date(y, m, 0).getDate();
+  for(var i=0;i<first;i++){ var e=document.createElement('div'); e.className='em-d em-empty'; cal.appendChild(e); }
+  var t=new Date();
+  for(var d=1; d<=days; d++){
+    (function(dd){
+      var b=document.createElement('button'); b.type='button'; b.className='em-d'; b.textContent=dd;
+      if(y===t.getFullYear() && m===t.getMonth()+1 && dd===t.getDate()) b.classList.add('em-today');
+      var s=y+'-'+String(m).padStart(2,'0')+'-'+String(dd).padStart(2,'0');
+      if(EM_DATE===s) b.classList.add('em-sel');
+      b.onclick=function(){ emPickDay(dd); };
+      cal.appendChild(b);
+    })(d);
+  }
+}
+function emPickPrev(){ EM_PICK_M--; if(EM_PICK_M<1){ EM_PICK_M=12; EM_PICK_Y--; } renderEmCal(); }
+function emPickNext(){ EM_PICK_M++; if(EM_PICK_M>12){ EM_PICK_M=1; EM_PICK_Y++; } renderEmCal(); }
+function emPickDay(d){
+  var s=EM_PICK_Y+'-'+String(EM_PICK_M).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+  EM_DATE=s;
+  document.getElementById('emMask').classList.remove('show');
+  onEmDateChange(s);
+}
+function setEmQuick(n){
+  var t=new Date(); t.setDate(t.getDate()+n);
+  var s=fmtDateLocal(t);
+  EM_DATE=s; document.getElementById('emMask').classList.remove('show'); onEmDateChange(s);
+}
+function cancelEmDate(){ document.getElementById('emMask').classList.remove('show'); }
+function onEmDateChange(v){
+  if(!v) return;
+  EM_DATE=v;
+  META.date=v;   // 副标题/导出板块名同步反映所选历史日期
+  var btn=document.getElementById('emDateBtn');
+  var txt=document.getElementById('emDateTxt');
+  var today=fmtDateLocal(new Date());
+  if(btn){
+    if(v===today){ btn.classList.remove('em-his'); btn.title='东财选股日期（按问句回测所选日期，非今日即历史回测）'; }
+    else { btn.classList.add('em-his'); btn.title='东财历史回测：'+v; }
+  }
+  if(txt){ txt.textContent = (v===today) ? '今日' : v.slice(5); }   // 按钮显示 月-日 或 今日
+  var sub=document.getElementById('sub'); if(sub) sub.textContent=v+' · 共 '+curRows.length+' 只';
+}
+// 一字选股日期处理
+function jyz_sort_date(){ return null; }
+
+// 一字选股日期处理
+function jyz_sort_date(){ return null; }
+
+// 统一入口：按当前数据源分发
+function runPick(){
+  var q = (document.getElementById('wencaiInput').value || '').trim();
+  if(!q && CUR_SRC !== 'yizhi' && CUR_SRC !== 'ai') { alert('请输入问句'); return; }
+  
+  if(CUR_SRC === 'em') return runEastmoney(q);
+  if(CUR_SRC === 'wenda') return runWenda(q);
+  if(CUR_SRC === 'yizhi') return runYiZhi();  // 一字不需要问句，直接执行
+  if(CUR_SRC === 'ai') return runAi();        // AI 不需要问句，直接拉服务器快照
+  return runWencai();
+}
+
+// ===== 一字选股 =====
+function runYiZhi(){
+  var di = jyz_sort_date() || fmtDateLocal(new Date());
+  var today = fmtDateLocal(new Date());
+  wqStatus('一字选股（'+di+'）中…');
+
+  BiddingSelector.init({
+    onSelect: function(stocks, info) {
+      if (!stocks || !stocks.length) {
+        wqStatus('一字选股无结果（'+di+'）');
+        render();
+        return;
+      }
+      var added = [];
+      stocks.forEach(function(s) {
+        if (ROWS.some(function(r) { return r.code === s.code; })) return;
+        var r = {
+          code: s.code,
+          name: s.name,
+          price: s.price || null,
+          zf: s.bidChange || null,
+          change_pct: s.realChange || null,
+          hs: null, lb: null, zb: null, bl: null,
+          r0_in:null, r0_out:null, r1_in:null, r1_out:null,
+          r2_in:null, r2_out:null, r3_in:null, r3_out:null,
+          main_in:null, amount_wan:null, main_pct:null,
+          turnover_pct:null, vol_ratio:null,
+          manual:true,
+          emHis:(di !== today)
+        };
+        ROWS.push(r);
+        curRows.push(r);
+        added.push(r);
+      });
+      wqStatus('一字选股返回 '+added.length+' 只（'+di+', 接口已过滤）');
+      fetchManual(added);
+      render();
+    },
+    onError: function(e){
+      wqStatus('一字选股失败：'+e);
+      render();
+    },
+    onProgress: function(msg){
+      wqStatus(msg);
+    }
+  });
+
+  BiddingSelector.select();
+}
+
+// ===== AI 竞价选股（ai.jiaoyi-gou.com/?p=12，经服务器快照 jingjia.json 落表） =====
+// 源站是 Streamlit SPA（数据经 WebSocket+protobuf 推送），手机/浏览器无法直连抓取，
+// 故统一读服务器托管快照：http://111.231.79.7/jingjia.json（PC 每交易日 09:26 自动入库）。
+// 结构：{generated, source, dates:['20261007',…], byDate:{日期:{meta,data:[{code,name,bidChange,bidVol,changePct}]}}}
+var AI_URL = '/jingjia.json';
+function aiCompact(s){ return String(s||'').replace(/-/g,''); }              // 2026-10-07 -> 20261007
+function aiDisplay(d){ d=String(d||''); return d.length===8 ? d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6,8) : d; }
+function aiNum(v){ var n=parseFloat(String(v==null?'':v).replace(/[%,手]/g,'').replace(/,/g,'')); return isFinite(n)?n:null; }
+
+// AI 快照日期表（独立变量，与东财 EM_DATE 完全分离）
+var AI_SNAP = null;      // 整份 jingjia.json 缓存（点选股/开日历都复用，避免重复请求）
+var AI_DATES = [];       // 已有快照的交易日，紧凑格式 20261007，降序
+var AI_DATE = '';        // 当前选择的快照日；'' = 跟随最新交易日
+var AI_PICK_Y = 2026, AI_PICK_M = 10;
+
+function loadAiSnapshot(cb){
+  if(AI_SNAP){ cb&&cb(AI_SNAP); return; }
+  var url=(API_BASE||'')+AI_URL;
+  var ctrl=(window.AbortController)?new AbortController():null;
+  var to=ctrl?setTimeout(function(){ try{ctrl.abort();}catch(e){} },12000):null;
+  fetch(url+(url.indexOf('?')>=0?'&':'?')+'_='+Date.now(),{cache:'no-store',signal:ctrl?ctrl.signal:undefined})
+    .then(function(r){ if(to) clearTimeout(to); return r.json(); })
+    .then(function(j){
+      AI_SNAP=j||null; AI_DATES=(j&&j.dates)||[];
+      updateAiDateBtn(); cb&&cb(AI_SNAP);
+    })
+    .catch(function(){ if(to) clearTimeout(to); AI_SNAP=null; AI_DATES=[]; cb&&cb(null); });
+}
+function updateAiDateBtn(){
+  var b=document.getElementById('aiDateBtn'), t=document.getElementById('aiDateTxt');
+  if(t) t.textContent = AI_DATE ? aiDisplay(AI_DATE).slice(5) : '最新';
+  if(!b) return;
+  if(AI_DATE){ b.classList.add('em-his'); b.title='AI 竞价选股：读取 '+aiDisplay(AI_DATE)+' 的已有快照'; }
+  else { b.classList.remove('em-his'); b.title='AI 竞价选股日期（默认最新交易日；只能选已有快照的交易日）'; }
+}
+
+// ===== AI 独立日期弹层（只渲染「有快照」的日期；无快照置灰不可点） =====
+function openAiDatePicker(){
+  // 真机兼容：与东财弹层同样写一次内联长手样式（旧 WebView 不认 inset 简写）
+  (function(){ var mk=document.getElementById('aiMask'); if(!mk) return;
+    mk.style.position='fixed';
+    mk.style.top='0'; mk.style.right='0'; mk.style.bottom='0'; mk.style.left='0';
+    mk.style.width='100%'; mk.style.height='100%'; mk.style.margin='0'; mk.style.boxSizing='border-box';
+    mk.style.overflowY='auto'; mk.style.overflowX='hidden'; mk.style.webkitOverflowScrolling='touch';
+    mk.style.alignItems='flex-start'; mk.style.justifyContent='center'; mk.style.padding='12px 10px';
+  })();
+  var tip=document.getElementById('aiTip');
+  if(tip && !AI_DATES.length) tip.textContent='正在读取服务器快照日期表…';
+  document.getElementById('aiMask').classList.add('show');
+  var cur = AI_DATE ? new Date(aiDisplay(AI_DATE)+'T00:00:00') : new Date();
+  if(AI_DATES.length && !AI_DATE) cur=new Date(aiDisplay(AI_DATES[0])+'T00:00:00');
+  if(isNaN(cur.getTime())) cur=new Date();
+  AI_PICK_Y=cur.getFullYear(); AI_PICK_M=cur.getMonth()+1;
+  renderAiCal();
+  loadAiSnapshot(function(){          // 异步补齐日期表后重绘（有快照的日子才亮金色）
+    if(tip) tip.textContent='金色边框=服务器已有该交易日快照（可读）；灰色=无快照，不可选';
+    renderAiCal();
+  });
+}
+function renderAiCal(){
+  var y=AI_PICK_Y, m=AI_PICK_M, cal=document.getElementById('aiCal');
+  if(!cal) return;
+  document.getElementById('aiYM').textContent=y+'年'+String(m).padStart(2,'0')+'月';
+  cal.innerHTML='';
+  var wk=['日','一','二','三','四','五','六'];
+  wk.forEach(function(w){ var d=document.createElement('div'); d.className='em-w'; d.textContent=w; cal.appendChild(d); });
+  var first=new Date(y, m-1, 1).getDay(), days=new Date(y, m, 0).getDate();
+  for(var i=0;i<first;i++){ var e=document.createElement('div'); e.className='em-d em-empty'; cal.appendChild(e); }
+  var t=new Date();
+  for(var dd=1; dd<=days; dd++){
+    (function(d){
+      var b=document.createElement('button'); b.type='button'; b.className='em-d'; b.textContent=d;
+      var s=String(y)+String(m).padStart(2,'0')+String(d).padStart(2,'0');
+      var has=AI_DATES.indexOf(s)>=0;
+      if(has) b.classList.add('em-has'); else b.classList.add('em-dis');
+      if(y===t.getFullYear() && m===t.getMonth()+1 && d===t.getDate()) b.classList.add('em-today');
+      if(AI_DATE===s) b.classList.add('em-sel');
+      b.onclick=function(){
+        if(!has){ wqStatus('AI 竞价选股：'+aiDisplay(s)+' 没有已抓取的快照，换一个金色日期'); return; }
+        AI_DATE=s; document.getElementById('aiMask').classList.remove('show');
+        updateAiDateBtn(); wqStatus('已选 AI 快照日 '+aiDisplay(s)+'，点【选股】读取');
+      };
+      cal.appendChild(b);
+    })(dd);
+  }
+}
+function aiPickPrev(){ AI_PICK_M--; if(AI_PICK_M<1){ AI_PICK_M=12; AI_PICK_Y--; } renderAiCal(); }
+function aiPickNext(){ AI_PICK_M++; if(AI_PICK_M>12){ AI_PICK_M=1; AI_PICK_Y++; } renderAiCal(); }
+function setAiQuick(n){   // 0=最新 1=上一交易日 2=前二交易日（按已有快照交易日，不是自然日）
+  if(!AI_DATES.length){ loadAiSnapshot(function(){ setAiQuick(n); }); return; }
+  AI_DATE = AI_DATES[Math.min(n, AI_DATES.length-1)] || '';
+  document.getElementById('aiMask').classList.remove('show');
+  updateAiDateBtn(); wqStatus('已选 AI 快照日 '+aiDisplay(AI_DATE)+'，点【选股】读取');
+}
+function cancelAiDate(){ document.getElementById('aiMask').classList.remove('show'); }
+
+function runAi(){
+  wqStatus('AI 竞价选股（ai.jiaoyi-gou.com/?p=12）读取中…');
+  loadAiSnapshot(function(j){
+      var bd=(j&&j.byDate)||{}, ds=(j&&j.dates)||[];
+      if(!ds.length){ wqStatus('AI 竞价选股失败：服务器快照不可达或为空'); render(); return; }
+      var want=AI_DATE || ds[0];                       // 未选日期 → 最新交易日
+      var di=(ds.indexOf(want)>=0)?want:ds[0];
+      var list=((bd[di]||{}).data)||[];
+      if(!list.length){ wqStatus('AI 竞价选股无结果（'+aiDisplay(di)+'）'); render(); return; }
+      var todayStr=fmtDateLocal(new Date()), dstr=aiDisplay(di), his=(dstr!==todayStr);
+      ROWS=[]; curRows=[]; var added=[];
+      list.forEach(function(d){
+        var code=String(d.code||''); if(!/^\d{6}$/.test(code)) return;
+        if(ROWS.some(function(r){return r.code===code;})) return;
+        var r={code:code,name:d.name||'…',price:null,
+               zf:aiNum(d.bidChange), change_pct:aiNum(d.changePct),   // 源站该交易日的竞价涨幅/当日涨跌幅真值
+               bidVol:d.bidVol||'', hs:null, lb:null, zb:null, bl:null,
+               r0_in:null,r0_out:null,r1_in:null,r1_out:null,r2_in:null,r2_out:null,r3_in:null,r3_out:null,
+               main_in:null, amount_wan:null, main_pct:null, turnover_pct:null, vol_ratio:null,
+               manual:true, emHis:his, lockZf:his};   // lockZf：回测日锁定开盘涨幅/涨跌幅，不被腾讯实时覆盖
+        ROWS.push(r); curRows.push(r); added.push(r);
+      });
+      META.date=dstr;
+      AI_DATE=di; updateAiDateBtn();
+      var extra=(want!==di)?('（'+aiDisplay(want)+' 无快照，已回退最新交易日）'):'';
+      wqStatus('AI 竞价选股返回 '+added.length+' 只（'+dstr+extra+'，快照生成 '+(j&&j.generated||'—')+'）');
+      fetchManual(added);   // 补腾讯实时行情（lockZf 保护竞价真值）→ 自动接新浪 8 档资金流
+      render();
+  });
+}
+
+// ===== 东财选股 =====
+function applyEastmoney(d){
+  var di = EM_DATE || fmtDateLocal(new Date());
+  var today = fmtDateLocal(new Date());
+  if(!d || d.__error__){ wqStatus('东财请求失败：'+(d&&d.__error__||'网络错误')); render(); return; }
+  if(!d || d.code!=='100' || !d.data || !d.data.result || !d.data.result.dataList){
+    wqStatus('东财无结果：'+(d&&d.msg||'未知错误')); render(); return;
+  }
+  var cols=d.data.result.columns||[], dl=d.data.result.dataList||[];
+  if(!dl.length){ wqStatus('东财无匹配（'+di+'）'); render(); return; }
+  ROWS=[]; curRows=[]; var added=[];
+  dl.forEach(function(row){
+    var code=String(row.SECURITY_CODE||'').split('.')[0];
+    var name=row.SECURITY_SHORT_NAME||'…';
+    if(!/^\d{6}$/.test(code)) return;
+    if(ROWS.some(function(r){return r.code===code;})) return;
+    var a=parseEastmoney(cols,row);
+    var r={code:code,name:name,price:a.price,zf:a.zf,change_pct:a.change_pct,hs:a.hs,lb:a.lb,zb:a.zb,bl:a.bl,
+           r0_in:null,r0_out:null,r1_in:null,r1_out:null,r2_in:null,r2_out:null,r3_in:null,r3_out:null,
+           main_in:null, amount_wan:a.amount_wan, main_pct:null, turnover_pct:a.turnover_pct, vol_ratio:a.vol_ratio, manual:true, emHis:(di!==today)};
+    ROWS.push(r); curRows.push(r); added.push(r);
+  });
+  wqStatus('东财返回 '+added.length+' 只（'+di+'，集合竞价字段已含，资金流为今日实时）');
+  fetchManualFlow(added);   // 仅补新浪资金流；集合竞价字段保留东财所选日期值（不受盘中刷新覆盖）
+  render();
+}
+// 东财选股：浏览器直连优先（东财 ACAO 按请求 Origin 回写，托管页 http://111.231.79.7 与本地 file:// 均放行，无需服务器）；
+// 直连失败（CORS/网络/超时/被限流）或返回空 → 回退服务器代理 /pq/em（服务器做替补）。
+var EM_URL = "https://np-tjxg-g.eastmoney.com/api/smart-tag/stock/v3/pw/search-code";
+var EM_FP  = "968ed0297d6b03d023063012b393b222";
+function runEastmoney(q){
+  var di = EM_DATE || fmtDateLocal(new Date());
+  var today = fmtDateLocal(new Date());
+  wqStatus((di===today ? '东财选股（今日实时·直连）' : '东财历史回测 '+di+'（直连）')+' 选股中…');
+  var kw = (di===today) ? q : (di+';'+q);   // 非今日：参考页写法，日期拼到问句前（东财据此回测历史）
+  // 直连优先：东财 ACAO 按请求 Origin 回写（托管页 http://111.231.79.7 与本地文件 null 均放行）
+  var body = JSON.stringify({keyWord:kw, pageSize:1000, pageNo:1, fingerprint:EM_FP, date:di});
+  var ctrl = (window.AbortController) ? new AbortController() : null;
+  var to = ctrl ? setTimeout(function(){ try{ctrl.abort();}catch(e){} }, 12000) : null;
+  fetch(EM_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:body,
+                 signal: ctrl?ctrl.signal:undefined})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(to) clearTimeout(to);
+      // 直连返回有效数据列表则直接落表；否则（空/异常码）回退服务器代理
+      if(d && d.code==='100' && d.data && d.data.result && d.data.result.dataList && d.data.result.dataList.length){
+        applyEastmoney(d);
+      } else {
+        emViaServer(kw, di);
+      }
+    })
+    .catch(function(){ if(to) clearTimeout(to); emViaServer(kw, di); });
+}
+// 东财服务器代理兜底（直连失败/被限流/返回空时启用）
+function emViaServer(kw, di){
+  wqStatus('东财直连不可用，已切换服务器代理…');
+  var cb='jjyl_em_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
+  var url=API_BASE+'/pq/em?keyWord='+encodeURIComponent(kw)+'&date='+encodeURIComponent(di)+'&fp='+EM_FP;
+  jsonp(url, cb, applyEastmoney);
+}
+// 东财列标题模糊匹配 → 海赢列模型
+function parseEastmoney(cols,row){
+  function m(pred){ for(var i=0;i<cols.length;i++){ var t=String(cols[i].title||''); if(pred(t)){ var v=fnum(row[cols[i].key]); if(v!=null) return v; } } return null; }
+  var price        = m(function(t){ return t.indexOf('最新价')>=0; });
+  var zf           = m(function(t){ return t.indexOf('开盘涨幅')>=0 || t.indexOf('竞价涨')>=0; });
+  var change_pct   = m(function(t){ return t.indexOf('涨跌幅')>=0; });
+  var hs           = m(function(t){ return t.indexOf('开盘换手')>=0 || t.indexOf('竞价换手')>=0 || t.indexOf('竞价实际换手率')>=0; });
+  var lb           = m(function(t){ return t.indexOf('开盘量比')>=0 || t.indexOf('竞价量比')>=0; });
+  var zb           = m(function(t){ return t.indexOf('昨比')>=0; });
+  var bl           = m(function(t){ return t.indexOf('今竞/昨竞')>=0 || t.indexOf('竞价金额/昨日竞价金额')>=0 || t.indexOf('昨竞')>=0; });
+  var turnover_pct = m(function(t){ return t.indexOf('换手率')>=0 && t.indexOf('开盘')<0 && t.indexOf('竞价')<0; });
+  var vol_ratio    = m(function(t){ return t.indexOf('量比')>=0 && t.indexOf('开盘')<0 && t.indexOf('竞价')<0; });
+  var amount_wan=null;
+  for(var i=0;i<cols.length;i++){ var t=String(cols[i].title||''); if(t.indexOf('成交额')>=0 && t.indexOf('开盘')<0 && t.indexOf('竞价')<0){ amount_wan=parseAmtWan(row[cols[i].key]); break; } }
+  return {price:price,zf:zf,change_pct:change_pct,hs:hs,lb:lb,zb:zb,bl:bl,turnover_pct:turnover_pct,vol_ratio:vol_ratio,amount_wan:amount_wan};
+}
+function parseAmtWan(v){
+  if(v==null) return null;
+  var s=String(v).replace(/[,，\s]/g,'').trim(); var n=parseFloat(s); if(isNaN(n)) return null;
+  if(s.indexOf('亿')>=0) return n*10000;
+  if(s.indexOf('万')>=0) return n;
+  return n/10000;
+}
+// ===== 问达选股（通达信私有 callTQL；经阿里云 FC https 后端代理，支持盘中资金流刷新） =====
+// 问达会话机制（固定 ASPSessionID + 空RI首调）无法在浏览器直连完成，必须走 https 后端代理（阿里云 FC stock-screen）；
+// 代理把归一化 JSON 回传，此处落表并由 fetchManual 补全实时行情 + 新浪资金流（盯盘生效）。
+// 若服务器宕机/代理不可达（jsonp 返回 null 或 __error__），回退跳窗到问达源网页，保证“至少能查”。
+function runWenda(q){
+  wqStatus('问达选股中（callTQL 经阿里云 FC 后端）…');
+  var cb='jjyl_wd_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
+  var url=(WENDA_ENDPOINT||(API_BASE+'/pq/wenda'))+'?message='+encodeURIComponent(q);
+  var done=false;
+  // https 页面 + 后端仍是 http → 浏览器会按混合内容直接拦截，请求根本发不出去，
+  //   且 script 标签被拦不会触发 onerror，只能干等 15s。这里提前判定并即时兜底。
+  if(!WENDA_ENDPOINT && /^http:/.test(API_BASE) && location.protocol==='https:'){
+    wqStatus('问达不可用：页面为 https，但后端仍是 http（混合内容被浏览器拦截）。请在文件顶部填写 WENDA_ENDPOINT（https 地址）。');
+    try{ window.open('https://wenda.tdx.com.cn/site/wenda/stock_index.html?message='+encodeURIComponent(q)+'&queryType=SY','_blank'); }catch(e){}
+    return;
+  }
+  // 服务器不可用时的兜底：跳窗到问达官网同源页面（源网页可独立查）
+  var fallbackToSource=function(){
+    if(done) return; done=true;
+    var srcUrl='https://wenda.tdx.com.cn/site/wenda/stock_index.html?message='+encodeURIComponent(q)+'&queryType=SY';
+    wqStatus('问达服务器代理不可用（可能服务器宕机），已在新标签页打开问达官网，请在通达信环境查看结果');
+    try{ window.open(srcUrl,'_blank'); }catch(e){}
+  };
+  jsonp(url, cb, function(d){
+    if(done) return;                 // 已兜底（超时/其他路径）
+    if(d && !d.__error__){           // 代理正常返回（含合法空结果，由 applyWenda 提示“无结果”）
+      done=true; applyWenda(d);
+    } else {                         // 代理失败/宕机 → 跳窗溯源
+      fallbackToSource();
+    }
+  });
+  // 防服务器挂起无响应（连接通但不返回，onerror 不触发）：15s 后兜底跳窗
+  setTimeout(fallbackToSource, 15000);
+}
+function applyWenda(d){
+  if(!d || d.__error__){ wqStatus('问达请求失败：'+(d&&d.__error__||'网络错误')); render(); return; }
+  if(!d.list || !d.list.length){ wqStatus('问达无结果（该问句当日无匹配，或接口暂不可用）'); render(); return; }
+  ROWS=[]; curRows=[]; var added=[];
+  d.list.forEach(function(it){
+    var code=String(it.code||'').trim();
+    if(!/^\d{6}$/.test(code)) return;
+    if(ROWS.some(function(r){return r.code===code;})) return;
+    var r={code:code, name:it.name||'…', price:(it.price!=null?it.price:null),
+           zf:(it.zf!=null?it.zf:null), change_pct:(it.change_pct!=null?it.change_pct:null),
+           hs:null, lb:(it.lb!=null?it.lb:null), zb:null, bl:null,
+           r0_in:null,r0_out:null,r1_in:null,r1_out:null,r2_in:null,r2_out:null,r3_in:null,r3_out:null,
+           main_in:null, amount_wan:null, main_pct:null, turnover_pct:null, vol_ratio:null, manual:true};
+    ROWS.push(r); curRows.push(r); added.push(r);
+  });
+  // 问达只回开盘涨幅/涨跌幅/竞价量比，其余竞价字段缺失；META.date 始终为今日（问达不支持历史回测）
+  META.date=fmtDateLocal(new Date());
+  wqStatus('问达返回 '+added.length+' 只（开盘涨幅/涨跌幅/竞价量比已含，正在补全实时行情与资金流…）');
+  fetchManual(added);   // 腾讯实时行情 + 新浪8档资金流（与问财同链路，盯盘刷新生效）
+  render();
+}
+
+// 列定义：key/label/对齐/类型(num|str)/颜色类
+var COLS = [
+  {k:'code',    t:'代码',     l:1, ty:'str', c:''},
+  {k:'name',    t:'名称',     l:1, ty:'str', c:''},
+  {k:'price',        t:'现价',      l:0, ty:'num', c:''},
+  {k:'zf',           t:'开盘涨幅%', l:0, ty:'num', c:''},
+  {k:'change_pct',   t:'涨跌幅%',   l:0, ty:'num', c:''},
+  {k:'hs',           t:'开盘换手Z', l:0, ty:'num', c:''},
+  {k:'lb',           t:'开盘量比',  l:0, ty:'num', c:''},
+  {k:'zb',           t:'开盘昨比',  l:0, ty:'num', c:''},
+  {k:'bl',           t:'竞价昨比',  l:0, ty:'num', c:''},
+  {k:'r0_in', t:'超大单入(万元)', l:0, ty:'num', c:'in'},
+  {k:'r1_in', t:'大单入',        l:0, ty:'num', c:'in'},
+  {k:'r2_in', t:'中单入',        l:0, ty:'num', c:'in'},
+  {k:'r3_in', t:'小单入',        l:0, ty:'num', c:'in'},
+  {k:'r0_out', t:'超大单出(万元)', l:0, ty:'num', c:'out'},
+  {k:'r1_out', t:'大单出',        l:0, ty:'num', c:'out'},
+  {k:'r2_out', t:'中单出',        l:0, ty:'num', c:'out'},
+  {k:'r3_out', t:'小单出',        l:0, ty:'num', c:'out'},
+  {k:'main_in', t:'超大+大单净入(万元)', l:0, ty:'num', c:'sg'},
+  {k:'amount_wan', t:'成交额(万元)', l:0, ty:'num', c:''},
+  {k:'main_pct', t:'主净比%', l:0, ty:'num', c:'sg'},
+  {k:'turnover_pct', t:'换手率%', l:0, ty:'num', c:'turn'},
+  {k:'vol_ratio',   t:'量比',   l:0, ty:'num', c:'vr'}
+];
+
+var sortState = {idx:19, asc:false};
+var curRows = ROWS.slice();
+
+function fmt(v){
+  if(v===null||v===undefined||v==='') return '—';
+  if(typeof v==='number'){
+    if(Math.abs(v)>=10000) return (v/10000).toFixed(1)+'亿';
+    return (Math.round(v*100)/100).toLocaleString('zh-CN');
+  }
+  return v;
+}
+function cellClass(col,row){
+  var v=row[col.k];
+  if(col.c==='in'||col.c==='out') return col.c;
+  if(col.c==='sg'){ // 主净比%/主力净入：正红负绿
+    if(v===null||v===undefined) return '';
+    return v>0?'pos':'neg';
+  }
+  if(col.c==='turn'){ // 换手率%：>=5 深绿 >=2 绿 否则灰
+    if(v===null||v===undefined) return 'dim';
+    if(v>=5) return 'turn-hi';
+    if(v>=2) return 'turn-mid';
+    return 'dim';
+  }
+  if(col.c==='vr'){ // 量比：>=3 深绿 >=1.5 绿 否则灰
+    if(v===null||v===undefined) return 'dim';
+    if(v>=3) return 'vr-hi';
+    if(v>=1.5) return 'vr-mid';
+    return 'dim';
+  }
+  return '';
+}
+function favorable(r){
+  var mp=r.main_pct, tn=r.turnover_pct, vr=r.vol_ratio;
+  return (mp!==null&&mp!==undefined&&mp>0) &&
+         (tn!==null&&tn!==undefined&&tn>=2) &&
+         (vr!==null&&vr!==undefined&&vr>=1.5);
+}
+function prefix(code){ return (code[0]==='6'||code[0]==='9')?'sh':'sz'; }
+
+function render(){
+  var tbl=document.getElementById('tbl');
+  var thead=document.querySelector('#tbl thead'), tbody=document.querySelector('#tbl tbody');
+  thead.innerHTML='';
+  var tr=document.createElement('tr');
+  COLS.forEach(function(c,i){
+    var th=document.createElement('th');
+    th.className=(c.l?'lft ':'')+(i===0?'stk ':'')+(i===1?'nm ':'');
+    th.innerHTML=c.t+'<span class="ar">'+(sortState.idx===i?(sortState.asc?'▲':'▼'):'⇅')+'</span>';
+    th.onclick=function(){ if(sortState.idx===i) sortState.asc=!sortState.asc; else {sortState.idx=i;sortState.asc=true;} render(); };
+    tr.appendChild(th);
+  });
+  thead.appendChild(tr);
+  // 排序
+  var i=sortState.idx, asc=sortState.asc;
+  curRows.sort(function(a,b){
+    var va=a[COLS[i].k], vb=b[COLS[i].k];
+    if(va===null||va===undefined||va==='') va=asc?Infinity:-Infinity;
+    if(vb===null||vb===undefined||vb==='') vb=asc?Infinity:-Infinity;
+    if(typeof va==='string'){return asc?va.localeCompare(vb):vb.localeCompare(va);}
+    return asc?va-vb:vb-va;
+  });
+  tbody.innerHTML='';
+  curRows.forEach(function(r,ri){
+    var tr=document.createElement('tr');
+    if(favorable(r)) tr.className='name-green';
+    COLS.forEach(function(c,j){
+      var td=document.createElement('td');
+      td.className=(c.l?'lft ':'')+(j===0?'stk ':'')+(j===1?'nm ':'')+cellClass(c,r);
+      var val=fmt(r[c.k]);
+      if(j===0){
+        var gold=(typeof r.main_pct==='number' && r.main_pct>20);
+        td.innerHTML='<a class="code-link'+(gold?' code-gold':'')+'" onclick="gotoEm(\''+r.code+'\')">'+r.code+'</a>';
+      } else if(j===1){
+        td.innerHTML='<span class="name-link" onclick="gotoTdx(\''+r.code+'\')">'+r.name+'</span>';
+      } else {
+        td.textContent=val;
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  document.getElementById('cnt').textContent=curRows.length;
+  document.getElementById('sub').textContent=META.date+' · 共 '+curRows.length+' 只';
+  // 动态同步 sticky 左列：名称列左偏移自动跟随代码列实测宽度（列宽自适应，避免硬编码 left 错位）
+  var stkTh=tbl.querySelector('thead th.stk');
+  if(stkTh){
+    var sw=stkTh.offsetWidth;
+    if(sw>0){ tbl.style.setProperty('--stk-w', sw+'px'); tbl.style.setProperty('--nm-left', sw+'px'); }
+  }
+}
+
+// ===== 手动输入代码添加自选（对应「涨停接力-2.1.xls」人工输入代码列） =====
+function addManualCodes(raw){
+  if(!raw) return;
+  var list = raw.split(/[\s,，;；]+/).map(function(s){return (s||'').replace(/^(sh|sz|bj)/i,'').replace(/\.(sh|sz|bj)$/i,'').trim();})
+    .filter(function(c){return /^\d{6}$/.test(c);});
+  if(list.length===0){ alert('请输入 6 位股票代码，多个用空格分隔\n例如：600152 002074'); return; }
+  var added=[];
+  list.forEach(function(c){
+    if(ROWS.some(function(r){return r.code===c;})) return;   // 去重
+    var r={code:c, name:'…', price:null, zf:null, change_pct:null, hs:null, lb:null, zb:null, bl:null,
+           r0_in:null,r0_out:null,r1_in:null,r1_out:null,r2_in:null,r2_out:null,r3_in:null,r3_out:null,
+           main_in:null, amount_wan:null, main_pct:null, turnover_pct:null, vol_ratio:null, manual:true};
+    ROWS.push(r); curRows.push(r); added.push(r);
+  });
+  if(added.length===0){ alert('所选代码已在列表中'); return; }
+  var inp=document.getElementById('manualInput'); if(inp) inp.value='';
+  fetchManual(added);
+  render();
+}
+function fetchManual(rows){
+  var codes=rows.map(function(r){return fullCode(r.code);}).join(',');
+  var s=document.createElement('script');
+  s.src='https://qt.gtimg.cn/q='+codes+'&_='+Date.now();
+  s.onload=function(){
+    rows.forEach(function(r){
+      var raw=window['v_'+fullCode(r.code)]; if(!raw) return;
+      var p=raw.split('~'); if(p.length<50) return;
+      if(p[1]) r.name=p[1];
+      r.price=fnum(p[3]);
+      // lockZf（AI/东财历史回测日）：开盘涨幅%与涨跌幅% 用源站该交易日真值，禁止被腾讯实时覆盖
+      if(!r.lockZf) r.change_pct=fnum(p[32]);
+      r.amount_wan=fnum(p[37]); r.turnover_pct=fnum(p[38]); r.vol_ratio=fnum(p[49]);
+      // 开盘涨幅% 统一用腾讯实时算的今日开盘涨幅=(今开sp5-昨收sp4)/昨收sp4×100（问财"竞价涨幅"盘后返回历史旧值，不可信）
+      if(!r.lockZf && fnum(p[4]) && fnum(p[5])) r.zf=(fnum(p[5])-fnum(p[4]))/fnum(p[4])*100;
+      // 开盘量比/换手：问财竞价口径优先（真实竞价时点，与 auction.html 同口径），缺失时回退腾讯全天量比/换手率(sp49/sp38)
+      if(r.lb==null) r.lb=fnum(p[49]);
+      if(r.hs==null) r.hs=fnum(p[38]);
+      // zb(开盘昨比%)/bl(竞价昨比) 由问财竞价口径直接返回（竞价金额/昨日成交额、竞价金额/昨日竞价金额），与 auction.html 公式三同源；前端不再自行计算。人工代码腾讯无此数据→"—"。
+    });
+    render();                 // 先显示行情/名称，再补资金流
+    fetchManualFlow(rows);
+  };
+  s.onerror=function(){ try{s.parentNode.removeChild(s);}catch(e){} };
+  document.body.appendChild(s);
+}
+function fetchManualFlow(rows){
+  // 新浪资金流入/出分项：浏览器直连 jsonp_v2.php（与「涨停接力-2.1.xls」同源，无服务器代理）
+  var codes=rows.map(function(r){return sinaCode(r.code);}).join(',');
+  sinaFlowJsonp(codes, function(data){
+    applySinaFlow(data, rows);
+    recompute();            // 重算主净/主净比并刷新
+  });
+}
+function gotoEm(code){ window.open('http://quote.eastmoney.com/'+prefix(code)+code+'.html', '_blank'); }
+function gotoTdx(code){ window.location.href='http://www.treeid/code_'+code; }
+
+// ===== 一键导入通达信自定义板块 =====
+function exportToTdx(){
+  if(curRows.length===0){ alert('无数据可导入'); return; }
+  var blockName='海赢选股'+META.date.replace(/-/g,'');
+  var keys='', content='';
+  curRows.forEach(function(r){
+    var mkt=(r.code[0]==='6'||r.code[0]==='9')?'1':'0';
+    keys+=mkt+'#'+r.code+'|';
+    content+=mkt+'#'+r.code+'|';
+  });
+  keys=keys.replace(/\|$/,'');
+  // treeid 协议：先 AddToBlock 再 WriteBlk 双保险
+  var u1='http://www.treeid/AddToBlock_'+keys;
+  var u2='http://www.treeid/WriteBlk_'+blockName+'_'+content;
+  var f=document.createElement('iframe'); f.style.display='none'; f.src=u1; document.body.appendChild(f);
+  setTimeout(function(){ var f2=document.createElement('iframe'); f2.style.display='none'; f2.src=u2; document.body.appendChild(f2); },300);
+  setTimeout(function(){ alert('已发送导入通达信指令\n板块名：'+blockName+'\n共 '+curRows.length+' 只\n（请在通达信中确认自定义板块）'); },700);
+}
+
+// ===== 问财选股（移植自「通达信问句选股公开版」） =====
+// 选股：浏览器直连问财 stockpick 接口（免token，与 wcc.js 同款直拉模式，无服务器代理）
+var WQ_KEY='jjyl_wencai_queries';
+// 问财免token选股接口（浏览器直连，与 wcc.js 直拉模式一致，无服务器代理）
+var WENCAI_URL = "https://vis.10jqka.com.cn/clxg/default/insideapi/stockpick";
+// 竞价字段附加（与 auction.html / fetch_em_auction3 同口径：zb=竞价金额/昨日成交额×100；bl=今竞/昨竞）
+var AUCTION_FIELDS = "竞价涨幅，竞价量比，分时开盘价，竞价实际换手率，竞价金额，昨日成交额，今日竞价金额/昨日竞价金额大于0，竞价特大单净额";
+
+// 解析问财原始 JSON → [{code,name,vals}]
+function parseWencaiRaw(d){
+  if(!d || (d.errorcode!==undefined && d.errorcode!==0) || !d.result) return [];
+  var title = d.result.title, cols = [];
+  if(Array.isArray(title)){ cols = title.map(function(t){ return String(t==null?'':t).split('<br>')[0]; }); }
+  else if(title && typeof title === 'object'){ cols = Object.keys(title); }
+  var rows = d.result.result || [];
+  return rows.map(function(row){
+    if(!row) return null;
+    var code = String(row[0]==null?'':row[0]).split('.')[0];
+    var name = '';
+    if(row[1] && typeof row[1] === 'object'){ name = row[1].stock_name || ''; }
+    else if(typeof row[1] === 'string'){ name = row[1]; }
+    var vals = {};
+    for(var i=2; i<cols.length && i<row.length; i++){ vals[cols[i]] = row[i]; }
+    return {code:code, name:name, vals:vals};
+  }).filter(function(x){ return x && /\d{6}/.test(x.code); });
+}
+// 问财选股：浏览器直连 stockpick（同花顺 ACAO:*，托管页 http://111.231.79.7 与本地 file:// 均放行）；
+// 仅当直连失败（极少见限流/拦截）才回退服务器代理 /pq/wencai（服务器做替补，宕机时仍可纯前端）。
+function wencaiPick(query, withFields){
+  var q = withFields ? (query + "，" + AUCTION_FIELDS) : query;
+  // 直连参数：接口接受 strategies[1][w]，不能用 q=
+  var params = "strategies%5B1%5D%5Bw%5D=" + encodeURIComponent(q)
+             + "&strategies%5B1%5D%5Bfunction%5D=SOU_NIU&perpage=200&page=1";
+  return fetch(WENCAI_URL + "?" + params, {cache:'no-store'})
+    .then(function(r){ return r.json(); })
+    .then(parseWencaiRaw)
+    .catch(function(){
+      // 直连失败 → 服务器代理兜底
+      wqStatus('问财直连不可用，已切换服务器代理…');
+      return new Promise(function(resolve){
+        var cb='jjyl_wc_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
+        jsonp(API_BASE+'/pq/wencai?q='+encodeURIComponent(q)+'&perpage=200&page=1', cb,
+              function(d){ resolve(parseWencaiRaw(d)); });
+      });
+    });
+}
+// 问财字段模糊匹配（取不到返回 null）
+function wcMatch(vals, pred){
+  for(var k in vals){
+    if(pred(String(k))){
+      var v = parseFloat(vals[k]);
+      return isNaN(v) ? null : v;
+    }
+  }
+  return null;
+}
+// 解析问财竞价指标（zb/bl/lb/hs），口径与 auction.html 公式三一致
+function parseAuction(vals){
+  vals = vals || {};
+  var jjje = wcMatch(vals, function(k){ return k.indexOf('竞价金额')>=0 && k.indexOf('昨日')<0 && k.indexOf('{(}')<0 && k.indexOf('/昨日')<0; });
+  var zje = null;
+  for(var k in vals){ if(String(k)==='昨日成交额'){ var v=parseFloat(vals[k]); zje=isNaN(v)?null:v; break; } }
+  if(zje===null) zje = wcMatch(vals, function(k){ return (k==='昨日成交额') || (k.indexOf('成交额')>=0 && k.indexOf('竞价')<0); });
+  var zjj = wcMatch(vals, function(k){ return k.indexOf('昨日竞价金额')>=0; });
+  var lb = wcMatch(vals, function(k){ return k.indexOf('分时量比')>=0; });
+  if(lb===null) lb = wcMatch(vals, function(k){ return k.indexOf('竞价量比')>=0; });
+  var hs = wcMatch(vals, function(k){ return k.indexOf('竞价实际换手率')>=0; });
+  var zb = (jjje!=null && zje) ? Math.round(jjje/zje*100*10)/10 : null;
+  var bl = wcMatch(vals, function(k){ return k.indexOf('竞价金额/昨日竞价金额')>=0 || (k.indexOf('{(}')>=0 && k.indexOf('竞价金额')>=0); });
+  if(bl===null && zjj!=null && jjje!=null){ try{ bl = Math.round(jjje/zjj*10)/10; }catch(e){ bl=null; } }
+  return {lb: lb!=null?Math.round(lb*100)/100:null, hs: hs!=null?Math.round(hs*100)/100:null,
+          zb: zb, bl: bl!=null?Math.round(bl*10)/10:null};
+}
+// 新浪资金流：浏览器直连 jsonp_v2.php（与「涨停接力-2.1.xls」同源），返回 r0~r3 入/出（元）
+function sinaFlowJsonp(codes, onDone){
+  var cbName = 'jjylFlow_' + Date.now() + '_' + Math.floor(Math.random()*1e6);
+  var url = 'https://vip.stock.finance.sina.com.cn/quotes_service/api/jsonp_v2.php/'
+          + cbName + '/MoneyFlow.ssi_ssfx_flzjtj?daima=' + codes;
+  var s = document.createElement('script');
+  s.src = url;
+  window[cbName] = function(data){
+    try{ delete window[cbName]; }catch(e){}
+    try{ s.parentNode.removeChild(s); }catch(e){}
+    onDone(data);
+  };
+  s.onerror = function(){ try{ delete window[cbName]; }catch(e){} try{ s.parentNode.removeChild(s);}catch(e){} onDone(null); };
+  document.body.appendChild(s);
+}
+// 把新浪返回（数组或单对象）映射到 ROWS 的入/出分项（转万元）
+function assignFlow(r, d){
+  r.r0_in=fnum(d.r0_in)/10000; r.r0_out=fnum(d.r0_out)/10000;
+  r.r1_in=fnum(d.r1_in)/10000; r.r1_out=fnum(d.r1_out)/10000;
+  r.r2_in=fnum(d.r2_in)/10000; r.r2_out=fnum(d.r2_out)/10000;
+  r.r3_in=fnum(d.r3_in)/10000; r.r3_out=fnum(d.r3_out)/10000;
+}
+function applySinaFlow(data, rows){
+  var arr = Array.isArray(data) ? data : (data ? [data] : []);
+  if(arr.length===0 || rows.length===0) return;
+  var rowUsed = {}, dataUsed = {};
+  // 第一遍：symbol 精确匹配（多只场景，新浪批量返回带 symbol 字段）
+  arr.forEach(function(d, di){
+    if(!d) return;
+    var sym = d.symbol || '';
+    if(!sym) return;
+    for(var i=0;i<rows.length;i++){
+      if(rowUsed[i]) continue;
+      if(sinaCode(rows[i].code)===sym){ assignFlow(rows[i], d); rowUsed[i]=true; dataUsed[di]=true; break; }
+    }
+  });
+  // 第二遍：剩余数据项按位置补到剩余行（应对新浪单只返回「无 symbol 对象」的场景，手动添加单只即此）
+  var ri=0;
+  for(var di=0; di<arr.length; di++){
+    if(!arr[di] || dataUsed[di]) continue;
+    while(ri<rows.length && rowUsed[ri]) ri++;
+    if(ri<rows.length){ assignFlow(rows[ri], arr[di]); rowUsed[ri]=true; ri++; }
+  }
+}
+function wqStatus(s){ var el=document.getElementById('wencaiStatus'); if(el) el.textContent=s||''; }
+function runWencai(){
+  var q=(document.getElementById('wencaiInput').value||'').trim();
+  if(!q){ alert('请输入问财问句'); return; }
+  wqStatus('问财选股中…');
+  // 浏览器直连问财（无服务器代理）：①纯问句取代码集/名称；②叠加竞价字段取 zb/bl/lb/hs
+  Promise.all([wencaiPick(q,false), wencaiPick(q,true)])
+    .then(function(res){
+      var base = res[0]||[], wf = res[1]||[];
+      if(!base.length){ wqStatus('问财无结果（该问句当日无匹配，或接口暂不可用）'); render(); return; }
+      var amap = {}; wf.forEach(function(x){ if(x&&x.code) amap[x.code]=x.vals; });
+      // 选股=重新选择：清空后用结果重建（与参考网页一致）
+      ROWS=[]; curRows=[];
+      var added=[];
+      base.forEach(function(b){
+        if(ROWS.some(function(r){return r.code===b.code;})) return;
+        var a = parseAuction(amap[b.code]||{});
+        var r={code:b.code, name:b.name||'…', price:null, zf:null, change_pct:null, hs:null, lb:null, zb:null, bl:null,
+               r0_in:null,r0_out:null,r1_in:null,r1_out:null,r2_in:null,r2_out:null,r3_in:null,r3_out:null,
+               main_in:null, amount_wan:null, main_pct:null, turnover_pct:null, vol_ratio:null, manual:true};
+        // 开盘涨幅% 不采用问财"竞价涨幅"（问财盘后返回历史旧值，非今日真实开盘），统一由腾讯 (今开-昨收)/昨收 实时计算
+        if(a.lb!=null) r.lb=a.lb;   // 开盘量比=问财竞价量比（与 auction.html 同口径）
+        if(a.hs!=null) r.hs=a.hs;   // 开盘换手Z=问财竞价实际换手率（与 auction.html 同口径）
+        if(a.zb!=null) r.zb=a.zb;
+        if(a.bl!=null) r.bl=a.bl;
+        ROWS.push(r); curRows.push(r); added.push(r);
+      });
+      wqStatus('问财返回 '+added.length+' 只（竞价指标已含开盘昨比/竞价昨比），正在补全实时行情与资金流…');
+      fetchManual(added);
+      render();
+    })
+    .catch(function(e){ wqStatus('问财请求失败：'+(e&&e.message?e.message:e)); });
+}
+// 保存问句（localStorage）
+function saveQuery(){
+  var q=(document.getElementById('wencaiInput').value||'').trim();
+  if(!q){ alert('请输入要保存的问句'); return; }
+  var list=[];
+  try{ list=JSON.parse(localStorage.getItem(WQ_KEY)||'[]'); }catch(e){ list=[]; }
+  if(list.indexOf(q)<0){ list.push(q); localStorage.setItem(WQ_KEY, JSON.stringify(list)); }
+  loadSavedQueries(); wqStatus('已保存问句');
+}
+function loadSavedQueries(){
+  var sel=document.getElementById('wencaiSaved'); if(!sel) return;
+  var list=[];
+  try{ list=JSON.parse(localStorage.getItem(WQ_KEY)||'[]'); }catch(e){ list=[]; }
+  sel.innerHTML='<option value="">已保存问句…</option>'+
+    list.map(function(q){ return '<option value="'+q.replace(/"/g,'&quot;')+'">'+q+'</option>'; }).join('');
+}
+function onPickSaved(v){ if(v){ document.getElementById('wencaiInput').value=v; } }
+function delQuery(){
+  var sel=document.getElementById('wencaiSaved'); if(!sel) return;
+  var v=sel.value;
+  if(!v){ alert('请先在「已保存问句」下拉中选择要删除的问句'); return; }
+  if(!confirm('确认删除该已保存问句？\n\n'+v)) return;
+  var list=[];
+  try{ list=JSON.parse(localStorage.getItem(WQ_KEY)||'[]'); }catch(e){ list=[]; }
+  list=list.filter(function(q){ return q!==v; });
+  localStorage.setItem(WQ_KEY, JSON.stringify(list));
+  loadSavedQueries();
+  document.getElementById('wencaiInput').value='';
+  wqStatus('已删除问句（剩余 '+list.length+' 条）');
+}
+// 导出代码（当前表格代码列表，txt 下载 + 复制剪贴板）
+function exportCodes(){
+  if(curRows.length===0){ alert('无代码可导出'); return; }
+  var lines=curRows.map(function(r){ return r.code+(r.name?(' '+r.name):''); });
+  var txt=lines.join('\n');
+  try{
+    var blob=new Blob([txt], {type:'text/plain;charset=utf-8'});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download='jjyl_codes_'+META.date+'.txt'; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 100);
+  }catch(e){}
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){}, function(){});
+  }
+  wqStatus('已导出 '+curRows.length+' 只代码（txt 下载 + 剪贴板）');
+}
+
+// ===== 黑白主题 =====
+function toggleTheme(){ var b=document.body; b.classList.toggle('dark');
+  try{ localStorage.setItem('jjyl-theme', b.classList.contains('dark')?'dark':'light'); }catch(e){} }
+(function(){ try{ if(localStorage.getItem('jjyl-theme')==='dark') document.body.classList.add('dark'); }catch(e){} })();
+
+
+// ===== 盘中实时刷新（仅交易日盘中；腾讯行情+新浪资金流均浏览器直连，无服务器代理；开盘5指标保持09:26快照） =====
+var LIVE = {active:true, qTimer:null, fTimer:null};
+
+function fnum(v){ var n=parseFloat(v); return (isNaN(n)||!isFinite(n))?null:n; }
+function fullCode(code){ return (code[0]==='6'||code[0]==='9')?'sh'+code:'sz'+code; }
+
+function inTradingHours(){
+  var d=new Date(), h=d.getHours(), m=d.getMinutes(), t=h*60+m;
+  var am = t>=9*60+25 && t<=11*60+35;   // 集合竞价+上午
+  var pm = t>=13*60    && t<=15*60+5;    // 下午+尾盘余量
+  return am||pm;
+}
+function todayStr(){ var d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+function refreshQuotes(){
+  if(!LIVE.active || ROWS.length===0) return;
+  var codes=ROWS.filter(function(r){return !r.emHis;}).map(function(r){return fullCode(r.code);}).join(',');
+  if(!codes) return;
+  var s=document.createElement('script');
+  s.src='https://qt.gtimg.cn/q='+codes+'&_='+Date.now();
+  s.onload=function(){
+    ROWS.forEach(function(r){
+      if(r.emHis) return;
+      var raw=window['v_'+fullCode(r.code)]; if(!raw) return;
+      var p=raw.split('~'); if(p.length<50) return;
+      r.price=fnum(p[3]); r.change_pct=fnum(p[32]);
+      r.amount_wan=fnum(p[37]); r.turnover_pct=fnum(p[38]); r.vol_ratio=fnum(p[49]);
+      // zb/bl 为问财竞价口径快照（开盘即定），盘中不随成交额变化，保持代理返回原值
+    });
+    recompute(); try{s.parentNode.removeChild(s);}catch(e){}
+  };
+  s.onerror=function(){ try{s.parentNode.removeChild(s);}catch(e){} };
+  document.body.appendChild(s);
+}
+function sinaCode(code){
+  var c = String(code||'').replace(/^(sh|sz|bj)/i,'').replace(/\.(sh|sz|bj)$/i,'');
+  var p = (c[0]==='6'||c[0]==='9') ? 'sh' : (c[0]==='8'||c[0]==='4') ? 'bj' : 'sz';
+  return p + c;
+}
+function refreshFlow(){
+  if(!LIVE.active || ROWS.length===0) return;
+  // 新浪资金流入/出分项：浏览器直连 jsonp_v2.php（与「涨停接力-2.1.xls」同源，无服务器代理）
+  var codes=ROWS.map(function(r){return sinaCode(r.code);}).join(',');
+  sinaFlowJsonp(codes, function(data){
+    applySinaFlow(data, ROWS);
+    recompute();
+  });
+}
+function recompute(){
+  ROWS.forEach(function(r){
+    if(r.amount_wan && r.r0_in!=null && r.r0_out!=null && r.r1_in!=null && r.r1_out!=null){
+      var mn=(r.r0_in+r.r1_in-r.r0_out-r.r1_out);   // 万元
+      r.main_in=mn;
+      r.main_pct=r.amount_wan>0 ? mn/r.amount_wan*100 : null;
+    }
+  });
+  render();          // 保留当前 sortState 与配色，仅刷新数值
+  updateLiveBadge();
+}
+function updateLiveBadge(){
+  var el=document.getElementById('live'); if(!el) return;
+  var txt=document.getElementById('liveTxt');
+  if(LIVE.active && inTradingHours()){
+    el.className='live on';
+    var d=new Date();
+    var ts=[d.getHours(),d.getMinutes(),d.getSeconds()].map(function(x){return String(x).padStart(2,'0');}).join(':');
+    txt.textContent='盘中实时刷新 · '+ts;
+  } else if(LIVE.active){
+    el.className='live off';
+    txt.textContent='盘后快照（开盘5指标为竞价数据）';
+  } else {
+    el.className='live off';
+    txt.textContent='历史归档页（静态，无实时刷新）';
+  }
+}
+function isArchivePage(){ return /jjyl_\d{8}\.html$/.test(location.pathname); }
+function startLive(){
+  LIVE.active = !isArchivePage();           // 主页面(客户端驱动)按交易时段实时刷新；归档页静态
+  if(LIVE.active) META.date = todayStr();   // 主页面跨日仍视为当日（页面长期部署），保证盘中实时
+  updateLiveBadge();
+  if(LIVE.qTimer) clearInterval(LIVE.qTimer);
+  if(LIVE.fTimer) clearInterval(LIVE.fTimer);
+  if(!LIVE.active) return;
+  refreshQuotes(); refreshFlow();
+  LIVE.qTimer=setInterval(function(){ if(inTradingHours()) refreshQuotes(); else updateLiveBadge(); }, 6000);
+  LIVE.fTimer=setInterval(function(){ if(inTradingHours()) refreshFlow(); else updateLiveBadge(); }, 15000);
+}
+
+render();
+loadSavedQueries();
+startLive();
+</script>
+<!-- 东财自建日期选择弹层（纯按钮网格日历，不依赖任何原生表单控件，手机/桌面通吃） -->
+<div class="em-mask" id="emMask" onclick="if(event.target===this)cancelEmDate()">
+  <div class="em-pk">
+    <h3>东财历史回测 · 选择日期</h3>
+    <div class="em-cal-head">
+      <button type="button" class="em-nav" onclick="emPickPrev()">&#8249;</button>
+      <div class="em-ym" id="emYM">2026年09月</div>
+      <button type="button" class="em-nav" onclick="emPickNext()">&#8250;</button>
+    </div>
+    <div class="em-tip">选「过往交易日」才有历史数据；近期无竞价数据的日期（如本月内刚过去的几天）东财会返回最近交易日</div>
+    <div class="em-cal" id="emCal"></div>
+    <div class="quick">
+      <button type="button" onclick="setEmQuick(0)">今日</button>
+      <button type="button" onclick="setEmQuick(-1)">昨天</button>
+      <button type="button" onclick="setEmQuick(-2)">前天</button>
+    </div>
+    <div class="acts">
+      <button type="button" onclick="cancelEmDate()">取消</button>
+    </div>
+  </div>
+</div>
+<!-- AI 竞价选股：独立日期弹层（只读已有快照交易日；与东财「按问句回测任意日期」目标不同，故不共用） -->
+<div class="em-mask" id="aiMask" onclick="if(event.target===this)cancelAiDate()">
+  <div class="em-pk">
+    <h3>AI 竞价选股 · 选择快照日</h3>
+    <div class="em-cal-head">
+      <button type="button" class="em-nav" onclick="aiPickPrev()">&#8249;</button>
+      <div class="em-ym" id="aiYM">2026年10月</div>
+      <button type="button" class="em-nav" onclick="aiPickNext()">&#8250;</button>
+    </div>
+    <div class="em-tip" id="aiTip">金色边框=服务器已有该交易日快照（可读）；灰色=无快照，不可选</div>
+    <div class="em-cal" id="aiCal"></div>
+    <div class="quick">
+      <button type="button" onclick="setAiQuick(0)">最新</button>
+      <button type="button" onclick="setAiQuick(1)">上一交易日</button>
+      <button type="button" onclick="setAiQuick(2)">前二交易日</button>
+    </div>
+    <div class="acts">
+      <button type="button" onclick="cancelAiDate()">取消</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
