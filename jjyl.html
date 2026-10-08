@@ -11,7 +11,14 @@
 <meta name="apple-mobile-web-app-title" content="海赢选股移动版">
 <meta name="theme-color" content="#1763d6">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<script src="BiddingSelector.js"></script>
+<!-- ===== BiddingSelector v1.0.0 原版（内联，取自 jjyl_m.html；服务器上的外部文件 BiddingSelector.js 已丢失）===== -->
+<script>
+/**
+ * BiddingSelector - Minified & Obfuscated Version
+ * Version: 1.0.0
+ */
+(function(global){"use strict";var DEFAULT_CONFIG={selectionPeriod:{start:{hour:9,minute:25},end:{hour:9,minute:29}},filter:{maxYesterdayChange:9,maxBidChange:8,maxCirculationMV:150,maxPrice:50,excludeST:true,excludeSuspended:true},scoringWeights:{liftStrength:35,volumeMatch:25,bidStability:20,hotMatch:12,riskAssessment:8},lockTime:{hour:9,minute:29},apiUrl:"https://push2dycalc.eastmoney.com/api/qt/clist/get?fs=m:1+t:2,m:0+t:6,m:0+t:80,m:1+t:23&fltt=2&invt=2&fields=f2,f3,f4,f5,f6,f8,f10,f12,f14,f15,f17,f18,f19,f20,f21,f615,f630,f100,f102,f103,f127&fid=f3&po=1&pn=1&pz=200&np=1&ut=c92c50e6b0fab2c17cd5e276e9a79c42",onSelect:null,onError:null,onProgress:null,debug:false};var config={},state={rawStocks:[],filteredStocks:[],scoredStocks:[],isLocked:false,lastUpdateTime:null,isLoading:false};function getBeijingTime(){var now=new Date();return new Date(now.getTime()+8*60*60*1000+now.getTimezoneOffset()*60*1000)}function formatNumber(num,decimals){if(num==null||isNaN(num))return"0";return num.toFixed(decimals)}function isInSelectionPeriod(){var bj=getBeijingTime(),hour=bj.getHours(),minute=bj.getMinutes(),start=config.selectionPeriod.start,end=config.selectionPeriod.end,currentMinutes=hour*60+minute,startMinutes=start.hour*60+start.minute,endMinutes=end.hour*60+end.minute;return currentMinutes>=startMinutes&&currentMinutes<=endMinutes}function isScoreLocked(){var bj=getBeijingTime(),hour=bj.getHours(),minute=bj.getMinutes(),lockHour=config.lockTime.hour,lockMinute=config.lockTime.minute;return hour>lockHour||hour===lockHour&&minute>lockMinute}function getEntityChange(stock){var open=parseFloat(stock.f17||0),close=parseFloat(stock.f2||0);if(open===0)return 0;return((close-open)/open)*100}function calculateYesterdayChange(stock){var prevClose=parseFloat(stock.f15||0),prevPrevClose=parseFloat(stock.f21||0);if(stock.f630!=null&&!isNaN(stock.f630))return parseFloat(stock.f630);if(prevClose>0&&prevPrevClose>0)return((prevClose-prevPrevClose)/prevPrevClose)*100;return 0}function formatStockCode(code){if(!code)return"";if(code.startsWith("6"))return"1#"+code;if(code.startsWith("4")||code.startsWith("8"))return"2#"+code;return"0#"+code}function filterStocks(stocks){var filter=config.filter;return stocks.filter(function(stock){var stockName=stock.f14||"",stockCode=stock.f12||"",openPrice=parseFloat(stock.f17||0),currentPrice=parseFloat(stock.f2||0),circulationMV=parseFloat(stock.f20||0),circulationMVYi=circulationMV/1e8,bidChange=stock.f615!=null&&!isNaN(stock.f615)?parseFloat(stock.f615):parseFloat(stock.f3||0),yesterdayChange=calculateYesterdayChange(stock);if(config.debug&&stockCode==="002141")console.log("[BiddingSelector Debug] 002141:",{f630:stock.f630,f15:stock.f15,f21:stock.f21,yesterdayChange:yesterdayChange,shouldFilter:yesterdayChange>=filter.maxYesterdayChange});if(filter.excludeST&&(stockName.includes("ST")||stockName.includes("*ST")))return false;if(filter.excludeSuspended&&openPrice===0&&currentPrice===0)return false;if(yesterdayChange>=filter.maxYesterdayChange||yesterdayChange>99)return false;if(bidChange>=filter.maxBidChange)return false;if(circulationMVYi>=filter.maxCirculationMV)return false;var price=currentPrice>0?currentPrice:openPrice;if(price>=filter.maxPrice)return false;if(price<=0)return false;return true})}function computeYiziScore(stock){var scoringWeights=config.scoringWeights,bidChange=stock.f615!=null&&!isNaN(stock.f615)?parseFloat(stock.f615):parseFloat(stock.f3||0),volumeRatio=parseFloat(stock.f10||0),openPrice=parseFloat(stock.f17||0),currentPrice=parseFloat(stock.f2||0),prevClose=parseFloat(stock.f15||0),circulationMV=parseFloat(stock.f20||0),circulationMVYi=circulationMV/1e8,price=currentPrice>0?currentPrice:openPrice,priceLift=prevClose>0?((openPrice-prevClose)/prevClose)*100:bidChange,liftScore=0;if(priceLift>=6&&priceLift<8)liftScore=scoringWeights.liftStrength;else if(priceLift>=4&&priceLift<6)liftScore=Math.round(scoringWeights.liftStrength*0.85);else if(priceLift>=2&&priceLift<4)liftScore=Math.round(scoringWeights.liftStrength*0.63);else if(priceLift>=0.5&&priceLift<2)liftScore=Math.round(scoringWeights.liftStrength*0.43);else if(priceLift>=0)liftScore=Math.round(scoringWeights.liftStrength*0.23);else liftScore=Math.round(scoringWeights.liftStrength*0.08);var volumeScore=0;if(volumeRatio>=4)volumeScore=scoringWeights.volumeMatch;else if(volumeRatio>=2.5)volumeScore=Math.round(scoringWeights.volumeMatch*0.8);else if(volumeRatio>=1.5)volumeScore=Math.round(scoringWeights.volumeMatch*0.6);else if(volumeRatio>=1)volumeScore=Math.round(scoringWeights.volumeMatch*0.4);else volumeScore=Math.round(scoringWeights.volumeMatch*0.2);var stabilityScore=0;if(volumeRatio>=1&&volumeRatio<=8&&bidChange>=0&&bidChange<8)stabilityScore=scoringWeights.bidStability;else if(volumeRatio>=0.5&&volumeRatio<=12&&bidChange>=-1&&bidChange<10)stabilityScore=Math.round(scoringWeights.bidStability*0.75);else stabilityScore=Math.round(scoringWeights.bidStability*0.4);var hotScore=0;if(circulationMVYi>0&&circulationMVYi<=50)hotScore=scoringWeights.hotMatch;else if(circulationMVYi<=100)hotScore=Math.round(scoringWeights.hotMatch*0.83);else if(circulationMVYi<=150)hotScore=Math.round(scoringWeights.hotMatch*0.5);else hotScore=Math.round(scoringWeights.hotMatch*0.25);var riskScore=0;if(price>0&&price<30&&circulationMVYi>0&&circulationMVYi<=100)riskScore=scoringWeights.riskAssessment;else if(price>=30&&price<50&&circulationMVYi<=150)riskScore=Math.round(scoringWeights.riskAssessment*0.75);else riskScore=Math.round(scoringWeights.riskAssessment*0.5);var totalScore=liftScore+volumeScore+stabilityScore+hotScore+riskScore,safePriceLift=Math.max(-5,Math.min(10,priceLift)),safeVolumeRatio=Math.max(0,Math.min(10,volumeRatio)),confidence=Math.min(95,Math.max(50,60+safePriceLift*2+safeVolumeRatio*2.5));return{totalScore:Math.round(totalScore),confidence:Math.round(confidence),liftScore:liftScore,volumeScore:volumeScore,stabilityScore:stabilityScore,hotScore:hotScore,riskScore:riskScore}}function processStocks(rawStocks){var filtered=filterStocks(rawStocks);state.filteredStocks=filtered;var scored=filtered.map(function(stock){var sc=computeYiziScore(stock),bidChange=stock.f615!=null&&!isNaN(stock.f615)?parseFloat(stock.f615):parseFloat(stock.f3||0),circulationMV=parseFloat(stock.f20||0),circulationMVYi=circulationMV/1e8,openPrice=parseFloat(stock.f17||0),currentPrice=parseFloat(stock.f2||0);return{code:stock.f12,name:stock.f14,probability:sc.totalScore,confidence:sc.confidence,bidChange:bidChange,realChange:parseFloat(stock.f3||0),entityChange:getEntityChange(stock),yesterdayChange:calculateYesterdayChange(stock),circulationMV:circulationMVYi,price:currentPrice>0?currentPrice:openPrice,industry:stock.f100||"-",concept:stock.f103||"-",liftScore:sc.liftScore,volumeScore:sc.volumeScore,stabilityScore:sc.stabilityScore,hotScore:sc.hotScore,riskScore:sc.riskScore,rawStock:stock}});scored.sort(function(a,b){return b.probability-a.probability});state.scoredStocks=scored;return scored}async function fetchStockData(){try{var response=await fetch(config.apiUrl),json=await response.json();if(json.rc!==0||!json.data||!json.data.diff)throw new Error("API返回数据异常");return json.data.diff}catch(error){console.error("[BiddingSelector] 获取数据失败:",error);throw error}}var BiddingSelector={init:function(userConfig){config=Object.assign({},DEFAULT_CONFIG,userConfig,{filter:Object.assign({},DEFAULT_CONFIG.filter,userConfig.filter),selectionPeriod:Object.assign({},DEFAULT_CONFIG.selectionPeriod,userConfig.selectionPeriod),scoringWeights:Object.assign({},DEFAULT_CONFIG.scoringWeights,userConfig.scoringWeights),lockTime:Object.assign({},DEFAULT_CONFIG.lockTime,userConfig.lockTime)});state.isLocked=isScoreLocked();return this},select:async function(){if(state.isLoading){console.warn("[BiddingSelector] 正在加载中...");return state.scoredStocks}state.isLoading=true;try{if(config.onProgress)config.onProgress("正在获取股票数据...");var rawStocks=await fetchStockData();state.rawStocks=rawStocks;if(config.onProgress)config.onProgress("正在处理数据...");var scoredStocks=processStocks(rawStocks);if(isScoreLocked()&&!state.isLocked)state.isLocked=true;state.lastUpdateTime=new Date();if(config.onSelect)config.onSelect(scoredStocks,{total:rawStocks.length,filtered:scoredStocks.length,isLocked:state.isLocked,updateTime:state.lastUpdateTime});return scoredStocks}catch(error){if(config.onError)config.onError(error);throw error}finally{state.isLoading=false}},getResult:function(){return state.scoredStocks},getTop3:function(){return state.scoredStocks.slice(0,3)},getRawData:function(){return state.rawStocks},getFilteredData:function(){return state.filteredStocks},isInSelectionPeriod:function(){return isInSelectionPeriod()},isScoreLocked:function(){return state.isLocked},lockScore:function(){state.isLocked=true},unlockScore:function(){state.isLocked=false},reset:function(){state={rawStocks:[],filteredStocks:[],scoredStocks:[],isLocked:false,lastUpdateTime:null,isLoading:false}},exportToTdx:function(stocks,type){if(!stocks||!stocks.length){console.warn("[BiddingSelector] 没有可导出的股票");return}var codes=Array.isArray(stocks)?stocks:[stocks];if(typeof codes[0]==="object")codes=codes.map(function(s){return s.code});var imp=codes.map(formatStockCode).join("|");var url=type==="select"?"http://www.treeid/Select_"+imp:"http://www.treeid/AddToBlock_"+imp;window.location.href=url},linkToTdx:function(code){if(!code)return;var iframe=document.createElement("iframe");iframe.style.display="none";iframe.src="http://www.treeid/code_"+code;document.body.appendChild(iframe);setTimeout(function(){document.body.removeChild(iframe)},1000)},getConfig:function(){return Object.assign({},config)},getState:function(){return Object.assign({},state)},version:"1.0.0"};if(typeof module!=="undefined"&&module.exports)module.exports=BiddingSelector;else global.BiddingSelector=BiddingSelector})(typeof window!=="undefined"?window:this);
+</script>
 <style>
 :root{--bg:#0c0913;--bg-card:#120d1c;--text:#f1ecfb;--muted:#9b8fb5;--border:rgba(168,85,247,0.22);
 --border-strong:rgba(245,185,66,0.32);--accent:#a855f7;--red:#ff5b6e;--green:#2dd4a7;--name-green:#2dd4a7;
@@ -166,6 +173,9 @@ var API_BASE  = (location.hostname==='111.231.79.7') ? '' : 'http://111.231.79.7
 //  「混合内容(mixed content)」全部拦截，故各通道需改用 https 地址。
 //  下面三个常量留空 = 维持原行为（服务器代理）；填了 = 走新地址。
 // ==================================================================
+var YZ_ENDPOINT = 'https://stock-screen-efvfnufnrv.cn-hangzhou.fcapp.run/yz?pz=200';  // 一字选股：阿里云 FC https 后端（同上函数，/yz 路由，原样转发东财 push2dycalc）
+var YZ_DIRECT   = 'https://push2dycalc.eastmoney.com/api/qt/clist/get?fs=m:1+t:2,m:0+t:6,m:0+t:80,m:1+t:23&fltt=2&invt=2&fields=f2,f3,f4,f5,f6,f8,f10,f12,f14,f15,f17,f18,f19,f20,f21,f615,f630,f100,f102,f103,f127&fid=f3&po=1&pn=1&pz=200&np=1&ut=c92c50e6b0fab2c17cd5e276e9a79c42';  // 降级用：原版直连东财（该域名放 ACAO 回写，可作兜底）
+var EM_ENDPOINT = 'https://stock-screen-efvfnufnrv.cn-hangzhou.fcapp.run/em';  // 东财：阿里云 FC https 后端（同上函数，/em 路由）
 var WENDA_ENDPOINT = 'https://stock-screen-efvfnufnrv.cn-hangzhou.fcapp.run/wenda';  // 问达：阿里云 FC https 后端（stock-screen 函数）
 var WENCAI_ENDPOINT = '';  // 问财：留空可用直连（已实测 CORS 全开，无需后端）
 var API_BASE_HTTPS  = 'https://txy.seamining.top';  // 其余通道(东财/AI)：服务器 https 地址（2026-10-09 已配 Let's Encrypt 证书）
@@ -299,48 +309,63 @@ function runYiZhi(){
   var today = fmtDateLocal(new Date());
   wqStatus('一字选股（'+di+'）中…');
 
-  BiddingSelector.init({
-    onSelect: function(stocks, info) {
-      if (!stocks || !stocks.length) {
-        wqStatus('一字选股无结果（'+di+'）');
-        render();
-        return;
-      }
-      var added = [];
-      stocks.forEach(function(s) {
-        if (ROWS.some(function(r) { return r.code === s.code; })) return;
-        var r = {
-          code: s.code,
-          name: s.name,
-          price: s.price || null,
-          zf: s.bidChange || null,
-          change_pct: s.realChange || null,
-          hs: null, lb: null, zb: null, bl: null,
-          r0_in:null, r0_out:null, r1_in:null, r1_out:null,
-          r2_in:null, r2_out:null, r3_in:null, r3_out:null,
-          main_in:null, amount_wan:null, main_pct:null,
-          turnover_pct:null, vol_ratio:null,
-          manual:true,
-          emHis:(di !== today)
-        };
-        ROWS.push(r);
-        curRows.push(r);
-        added.push(r);
-      });
-      wqStatus('一字选股返回 '+added.length+' 只（'+di+', 接口已过滤）');
-      fetchManual(added);
-      render();
-    },
-    onError: function(e){
-      wqStatus('一字选股失败：'+e);
-      render();
-    },
-    onProgress: function(msg){
-      wqStatus(msg);
-    }
-  });
+  var _yzTriedDirect = false;   // 后端失败后只降级重试一次
 
-  BiddingSelector.select();
+  function onSel(stocks, info) {
+    if (!stocks || !stocks.length) {
+      wqStatus('一字选股无结果（'+di+'）');
+      render();
+      return;
+    }
+    var added = [];
+    stocks.forEach(function(s) {
+      if (ROWS.some(function(r) { return r.code === s.code; })) return;
+      var r = {
+        code: s.code,
+        name: s.name,
+        price: s.price || null,
+        zf: s.bidChange || null,
+        change_pct: s.realChange || null,
+        hs: null, lb: null, zb: null, bl: null,
+        r0_in:null, r0_out:null, r1_in:null, r1_out:null,
+        r2_in:null, r2_out:null, r3_in:null, r3_out:null,
+        main_in:null, amount_wan:null, main_pct:null,
+        turnover_pct:null, vol_ratio:null,
+        manual:true,
+        emHis:(di !== today)
+      };
+      ROWS.push(r);
+      curRows.push(r);
+      added.push(r);
+    });
+    wqStatus('一字选股返回 '+added.length+' 只（'+di+', 接口已过滤）');
+    fetchManual(added);
+    render();
+  }
+
+  function onErr(e){
+    // 阿里云 FC 后端失败 → 降级回东财原始直连（该域名 ACAO 回写 Origin，可直连）
+    if(!_yzTriedDirect && window.YZ_DIRECT){
+      _yzTriedDirect = true;
+      wqStatus('一字后端不可用，降级直连东财…');
+      try{
+        BiddingSelector.init({ apiUrl: window.YZ_DIRECT, onSelect: onSel, onError: onErr, onProgress: onProg });
+        BiddingSelector.select();
+      } catch(e2){ wqStatus('一字选股失败：'+e2); render(); }
+      return;
+    }
+    wqStatus('一字选股失败：'+e);
+    render();
+  }
+
+  function onProg(msg){ wqStatus(msg); }
+
+  function start(url){
+    BiddingSelector.init({ apiUrl: url, onSelect: onSel, onError: onErr, onProgress: onProg });
+    BiddingSelector.select();
+  }
+
+  start(window.YZ_ENDPOINT || window.YZ_DIRECT);
 }
 
 // ===== AI 竞价选股（ai.jiaoyi-gou.com/?p=12，经服务器快照 jingjia.json 落表） =====
@@ -527,7 +552,7 @@ function runEastmoney(q){
 function emViaServer(kw, di){
   wqStatus('东财直连不可用，已切换服务器代理…');
   var cb='jjyl_em_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
-  var url=API_BASE+'/pq/em?keyWord='+encodeURIComponent(kw)+'&date='+encodeURIComponent(di)+'&fp='+EM_FP;
+  var url=(EM_ENDPOINT||(API_BASE+'/pq/em'))+'?keyWord='+encodeURIComponent(kw)+'&date='+encodeURIComponent(di)+'&fp='+EM_FP;
   jsonp(url, cb, applyEastmoney);
 }
 // 东财列标题模糊匹配 → 海赢列模型
