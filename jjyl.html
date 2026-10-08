@@ -168,7 +168,7 @@ var API_BASE  = (location.hostname==='111.231.79.7') ? '' : 'http://111.231.79.7
 // ==================================================================
 var WENDA_ENDPOINT = 'https://stock-screen-efvfnufnrv.cn-hangzhou.fcapp.run/wenda';  // 问达：阿里云 FC https 后端（stock-screen 函数）
 var WENCAI_ENDPOINT = '';  // 问财：留空可用直连（已实测 CORS 全开，无需后端）
-var API_BASE_HTTPS  = '';  // 其余通道(东财/AI)：https 版服务器地址，如 https://stock.你的域名
+var API_BASE_HTTPS  = 'https://txy.seamining.top';  // 其余通道(东财/AI)：服务器 https 地址（2026-10-09 已配 Let's Encrypt 证书）
 if (API_BASE_HTTPS) API_BASE = API_BASE_HTTPS;
 // https 页面 + 未配置 https 后端 → 提前判定为不可用，避免白等 15 秒
 var _httpsPageNoBackend = (location.protocol === 'https:' && !API_BASE_HTTPS);
