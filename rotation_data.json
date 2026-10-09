@@ -75305,5 +75305,87 @@
    "src": "kpl",
    "phase": "冰点"
   }
+ },
+ "2026-10-09": {
+  "AI应用": {
+   "rank": 1,
+   "score": 14962,
+   "fund": 40.74,
+   "pct": 2.437,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "文化传媒": {
+   "rank": 2,
+   "score": 6758,
+   "fund": 25.8,
+   "pct": 3.643,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "锂电池": {
+   "rank": 3,
+   "score": 5338,
+   "fund": 29.22,
+   "pct": 0.183,
+   "src": "kpl",
+   "phase": "高潮"
+  },
+  "医药": {
+   "rank": 4,
+   "score": 3922,
+   "fund": -10.7,
+   "pct": 1.32,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "证券": {
+   "rank": 5,
+   "score": 3331,
+   "fund": 11.86,
+   "pct": 2.317,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "农业": {
+   "rank": 6,
+   "score": 2799,
+   "fund": 17.78,
+   "pct": 1.518,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "化工": {
+   "rank": 7,
+   "score": 2312,
+   "fund": 14.76,
+   "pct": 0.429,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "零售": {
+   "rank": 8,
+   "score": 2216,
+   "fund": 6.73,
+   "pct": 2.515,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "平台经济": {
+   "rank": 9,
+   "score": 1660,
+   "fund": 0.78,
+   "pct": 1.889,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "三季报增长": {
+   "rank": 10,
+   "score": 1561,
+   "fund": 6.86,
+   "pct": 2.832,
+   "src": "kpl",
+   "phase": "启动"
+  }
  }
 }
