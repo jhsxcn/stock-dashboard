@@ -75961,5 +75961,87 @@
    "src": "kpl",
    "phase": "冰点"
   }
+ },
+ "2026-10-21": {
+  "数字经济": {
+   "rank": 1,
+   "score": 7308,
+   "fund": 13.39,
+   "pct": 0.427,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "AI应用": {
+   "rank": 2,
+   "score": 4848,
+   "fund": 3.83,
+   "pct": 0.66,
+   "src": "kpl",
+   "phase": "震荡"
+  },
+  "机器人概念": {
+   "rank": 3,
+   "score": 4688,
+   "fund": -9.76,
+   "pct": -0.325,
+   "src": "kpl",
+   "phase": "高潮"
+  },
+  "算力": {
+   "rank": 4,
+   "score": 3649,
+   "fund": 30.85,
+   "pct": 0.376,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "医药": {
+   "rank": 5,
+   "score": 2493,
+   "fund": -1.75,
+   "pct": -0.022,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "北京市": {
+   "rank": 6,
+   "score": 2115,
+   "fund": 1.74,
+   "pct": 0.277,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "海峡两岸": {
+   "rank": 7,
+   "score": 2040,
+   "fund": 7.28,
+   "pct": 0.533,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "商业航天": {
+   "rank": 8,
+   "score": 1996,
+   "fund": 4.77,
+   "pct": 0.079,
+   "src": "kpl",
+   "phase": "扩散"
+  },
+  "端侧AI": {
+   "rank": 9,
+   "score": 1730,
+   "fund": -10.68,
+   "pct": 0.62,
+   "src": "kpl",
+   "phase": "退潮"
+  },
+  "物理AI": {
+   "rank": 10,
+   "score": 1632,
+   "fund": 4.93,
+   "pct": 0.329,
+   "src": "kpl",
+   "phase": "退潮"
+  }
  }
 }
