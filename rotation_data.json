@@ -76125,5 +76125,87 @@
    "src": "kpl",
    "phase": "冰点"
   }
+ },
+ "2026-10-23": {
+  "机器人概念": {
+   "rank": 1,
+   "score": 36926,
+   "fund": 90.77,
+   "pct": 3.382,
+   "src": "kpl",
+   "phase": "高潮"
+  },
+  "AI应用": {
+   "rank": 2,
+   "score": 9744,
+   "fund": 49.76,
+   "pct": 2.998,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "物理AI": {
+   "rank": 3,
+   "score": 9125,
+   "fund": 30.16,
+   "pct": 5.092,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "三季报增长": {
+   "rank": 4,
+   "score": 7235,
+   "fund": 5.81,
+   "pct": 2.374,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "芯片": {
+   "rank": 5,
+   "score": 7098,
+   "fund": 52.81,
+   "pct": 2.493,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "端侧AI": {
+   "rank": 6,
+   "score": 4677,
+   "fund": 21.62,
+   "pct": 3.612,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "锂电池": {
+   "rank": 7,
+   "score": 2454,
+   "fund": 2.89,
+   "pct": 1.991,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "金融概念": {
+   "rank": 8,
+   "score": 2309,
+   "fund": 15.21,
+   "pct": 2.028,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "保险": {
+   "rank": 9,
+   "score": 2270,
+   "fund": -5.16,
+   "pct": 2.701,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "证券": {
+   "rank": 10,
+   "score": 2230,
+   "fund": 0.58,
+   "pct": 1.303,
+   "src": "kpl",
+   "phase": "启动"
+  }
  }
 }
