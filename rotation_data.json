@@ -76207,5 +76207,87 @@
    "src": "kpl",
    "phase": "冰点"
   }
+ },
+ "2026-10-26": {
+  "机器人概念": {
+   "rank": 1,
+   "score": 18547,
+   "fund": 40.03,
+   "pct": -0.738,
+   "src": "kpl",
+   "phase": "高潮"
+  },
+  "物理AI": {
+   "rank": 2,
+   "score": 3176,
+   "fund": 10.05,
+   "pct": 0.014,
+   "src": "kpl",
+   "phase": "高潮"
+  },
+  "三季报增长": {
+   "rank": 3,
+   "score": 2819,
+   "fund": 3.91,
+   "pct": -1.24,
+   "src": "kpl",
+   "phase": "退潮"
+  },
+  "银行": {
+   "rank": 4,
+   "score": 1451,
+   "fund": -0.16,
+   "pct": 1.517,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "医疗器械": {
+   "rank": 5,
+   "score": 1379,
+   "fund": 2.54,
+   "pct": 0.369,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "食品饮料": {
+   "rank": 6,
+   "score": 1312,
+   "fund": 3.83,
+   "pct": 0.465,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "物流": {
+   "rank": 7,
+   "score": 817,
+   "fund": 0.99,
+   "pct": 0.437,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "航运": {
+   "rank": 8,
+   "score": 698,
+   "fund": 0.51,
+   "pct": 0.988,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "石油石化": {
+   "rank": 9,
+   "score": 682,
+   "fund": 6.61,
+   "pct": 0.821,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "激光": {
+   "rank": 10,
+   "score": 621,
+   "fund": 0.52,
+   "pct": -1.79,
+   "src": "kpl",
+   "phase": "启动"
+  }
  }
 }
