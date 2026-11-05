@@ -76863,5 +76863,87 @@
    "src": "kpl",
    "phase": "冰点"
   }
+ },
+ "2026-11-05": {
+  "光伏": {
+   "rank": 1,
+   "score": 14744,
+   "fund": 31.22,
+   "pct": 3.004,
+   "src": "kpl",
+   "phase": "扩散"
+  },
+  "AI应用": {
+   "rank": 2,
+   "score": 10766,
+   "fund": 62.32,
+   "pct": 3.266,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "机器人概念": {
+   "rank": 3,
+   "score": 9491,
+   "fund": 41.28,
+   "pct": 2.498,
+   "src": "kpl",
+   "phase": "退潮"
+  },
+  "芯片": {
+   "rank": 4,
+   "score": 9254,
+   "fund": 7.13,
+   "pct": 2.438,
+   "src": "kpl",
+   "phase": "退潮"
+  },
+  "算力": {
+   "rank": 5,
+   "score": 7918,
+   "fund": 28.6,
+   "pct": 2.627,
+   "src": "kpl",
+   "phase": "退潮"
+  },
+  "储能": {
+   "rank": 6,
+   "score": 4338,
+   "fund": 14.45,
+   "pct": 2.577,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "地产链": {
+   "rank": 7,
+   "score": 4134,
+   "fund": 8.24,
+   "pct": 2.481,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "端侧AI": {
+   "rank": 8,
+   "score": 3387,
+   "fund": 25.42,
+   "pct": 3.074,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "锂电池": {
+   "rank": 9,
+   "score": 2827,
+   "fund": 37.95,
+   "pct": 2.687,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "黄金": {
+   "rank": 10,
+   "score": 2376,
+   "fund": 11.11,
+   "pct": 2.767,
+   "src": "kpl",
+   "phase": "退潮"
+  }
  }
 }
