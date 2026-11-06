@@ -76945,5 +76945,87 @@
    "src": "kpl",
    "phase": "冰点"
   }
+ },
+ "2026-11-06": {
+  "光伏": {
+   "rank": 1,
+   "score": 3680,
+   "fund": -8.35,
+   "pct": -1.626,
+   "src": "kpl",
+   "phase": "高潮"
+  },
+  "电力": {
+   "rank": 2,
+   "score": 2335,
+   "fund": 9.42,
+   "pct": -0.518,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "AI应用": {
+   "rank": 3,
+   "score": 2279,
+   "fund": -29.99,
+   "pct": -2.149,
+   "src": "kpl",
+   "phase": "高潮"
+  },
+  "农业": {
+   "rank": 4,
+   "score": 2116,
+   "fund": 2.27,
+   "pct": -0.884,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "锂电池": {
+   "rank": 5,
+   "score": 1575,
+   "fund": -31.75,
+   "pct": -2.2,
+   "src": "kpl",
+   "phase": "退潮"
+  },
+  "ST摘帽": {
+   "rank": 6,
+   "score": 617,
+   "fund": -0.17,
+   "pct": -1.449,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "端侧AI": {
+   "rank": 7,
+   "score": 592,
+   "fund": -6.46,
+   "pct": -2.844,
+   "src": "kpl",
+   "phase": "退潮"
+  },
+  "大飞机": {
+   "rank": 8,
+   "score": 331,
+   "fund": 0.25,
+   "pct": -1.688,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "热泵": {
+   "rank": 9,
+   "score": 327,
+   "fund": 1.56,
+   "pct": -1.73,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "体育产业": {
+   "rank": 10,
+   "score": 317,
+   "fund": 3.72,
+   "pct": -1.705,
+   "src": "kpl",
+   "phase": "启动"
+  }
  }
 }
