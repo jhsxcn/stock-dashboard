@@ -77027,5 +77027,87 @@
    "src": "kpl",
    "phase": "冰点"
   }
+ },
+ "2026-11-09": {
+  "机器人概念": {
+   "rank": 1,
+   "score": 11186,
+   "fund": 29.13,
+   "pct": 0.907,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "商业航天": {
+   "rank": 2,
+   "score": 7324,
+   "fund": 38.39,
+   "pct": 1.364,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "PCB概念": {
+   "rank": 3,
+   "score": 4102,
+   "fund": 26.88,
+   "pct": 1.025,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "体育产业": {
+   "rank": 4,
+   "score": 3830,
+   "fund": 16.58,
+   "pct": 0.397,
+   "src": "kpl",
+   "phase": "扩散"
+  },
+  "煤炭": {
+   "rank": 5,
+   "score": 2564,
+   "fund": 8.4,
+   "pct": 1.643,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "算力": {
+   "rank": 6,
+   "score": 2547,
+   "fund": 36.43,
+   "pct": 0.361,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "AI应用": {
+   "rank": 7,
+   "score": 1656,
+   "fund": 0.26,
+   "pct": -0.174,
+   "src": "kpl",
+   "phase": "退潮"
+  },
+  "天然气": {
+   "rank": 8,
+   "score": 1330,
+   "fund": 1.94,
+   "pct": 0.877,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "芯片": {
+   "rank": 9,
+   "score": 1196,
+   "fund": 36.94,
+   "pct": 0.559,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "低空经济": {
+   "rank": 10,
+   "score": 1042,
+   "fund": 3.84,
+   "pct": 0.564,
+   "src": "kpl",
+   "phase": "启动"
+  }
  }
 }
