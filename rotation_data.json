@@ -77191,5 +77191,87 @@
    "src": "kpl",
    "phase": "冰点"
   }
+ },
+ "2026-11-11": {
+  "机器人概念": {
+   "rank": 1,
+   "score": 15276,
+   "fund": 29.33,
+   "pct": 1.832,
+   "src": "kpl",
+   "phase": "高潮"
+  },
+  "光通信": {
+   "rank": 2,
+   "score": 15190,
+   "fund": 198.52,
+   "pct": 3.952,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "芯片": {
+   "rank": 3,
+   "score": 6113,
+   "fund": 164.19,
+   "pct": 2.126,
+   "src": "kpl",
+   "phase": "扩散"
+  },
+  "PCB概念": {
+   "rank": 4,
+   "score": 4941,
+   "fund": 67.59,
+   "pct": 3.293,
+   "src": "kpl",
+   "phase": "扩散"
+  },
+  "光伏": {
+   "rank": 5,
+   "score": 4715,
+   "fund": -9.61,
+   "pct": 1.286,
+   "src": "kpl",
+   "phase": "扩散"
+  },
+  "AI应用": {
+   "rank": 6,
+   "score": 4674,
+   "fund": -12.5,
+   "pct": 1.089,
+   "src": "kpl",
+   "phase": "退潮"
+  },
+  "算力": {
+   "rank": 7,
+   "score": 3091,
+   "fund": 33.93,
+   "pct": 1.914,
+   "src": "kpl",
+   "phase": "震荡"
+  },
+  "游戏": {
+   "rank": 8,
+   "score": 2693,
+   "fund": -2.45,
+   "pct": 2.024,
+   "src": "kpl",
+   "phase": "退潮"
+  },
+  "汽车零部件": {
+   "rank": 9,
+   "score": 2663,
+   "fund": 7.49,
+   "pct": 1.967,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "端侧AI": {
+   "rank": 10,
+   "score": 2566,
+   "fund": 1.55,
+   "pct": 1.588,
+   "src": "kpl",
+   "phase": "退潮"
+  }
  }
 }
