@@ -77355,5 +77355,87 @@
    "src": "kpl",
    "phase": "冰点"
   }
+ },
+ "2026-11-13": {
+  "AI应用": {
+   "rank": 1,
+   "score": 4637,
+   "fund": -40.08,
+   "pct": -1.545,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "芯片": {
+   "rank": 2,
+   "score": 4466,
+   "fund": -137.0,
+   "pct": -2.8,
+   "src": "kpl",
+   "phase": "高潮"
+  },
+  "文化传媒": {
+   "rank": 3,
+   "score": 3712,
+   "fund": -5.91,
+   "pct": -0.723,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "银行": {
+   "rank": 4,
+   "score": 1143,
+   "fund": 8.63,
+   "pct": 1.434,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "游戏": {
+   "rank": 5,
+   "score": 868,
+   "fund": -1.36,
+   "pct": -1.193,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "机器人概念": {
+   "rank": 6,
+   "score": 565,
+   "fund": -33.03,
+   "pct": -2.251,
+   "src": "kpl",
+   "phase": "退潮"
+  },
+  "ST摘帽": {
+   "rank": 7,
+   "score": 182,
+   "fund": 1.04,
+   "pct": -1.99,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "智能家居": {
+   "rank": 8,
+   "score": 172,
+   "fund": 0.54,
+   "pct": -1.713,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "实控人变更": {
+   "rank": 9,
+   "score": 68,
+   "fund": 0.13,
+   "pct": -1.669,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "保险": {
+   "rank": 10,
+   "score": 47,
+   "fund": 3.78,
+   "pct": 0.472,
+   "src": "kpl",
+   "phase": "启动"
+  }
  }
 }
