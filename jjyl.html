@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -68,9 +69,6 @@ align-items:center;justify-content:center}
 .em-cal .em-empty{background:transparent;border:none}
 .em-cal .em-today{border-color:var(--accent,#ff4d4f);color:var(--accent,#ff4d4f)}
 .em-cal .em-sel{background:var(--accent,#ff4d4f);color:#fff;border-color:var(--accent,#ff4d4f)}
-/* AI 快照日专用：有快照=金边可选；无快照=置灰不可点 */
-.em-cal .em-has{border-color:#f5b942;color:#f5b942;font-weight:600}
-.em-cal .em-dis{opacity:.3}
 .em-pk .acts{display:flex;gap:8px}
 .em-pk .acts button{flex:1;height:40px;border-radius:8px;border:1px solid var(--border-strong);
   background:var(--bg-card);color:var(--text);font-size:14px}
@@ -127,9 +125,8 @@ tbody tr:nth-child(even) td.stk,tbody tr:nth-child(even) td.nm{background:var(--
     <div class="live off" id="live"><span class="dot"></span><span id="liveTxt">盘后快照（开盘5指标为09:26竞价数据）</span></div>
   </div>
   <div class="btns">
-    <select id="srcSel" class="head-ctl" onchange="onSrcChange()" title="数据源"><option value="wencai" selected>问财</option><option value="em">东财</option><option value="wenda">问达</option><option value="yizhi">一字</option><option value="ai">AI</option></select>
+    <select id="srcSel" class="head-ctl" onchange="onSrcChange()" title="数据源"><option value="wencai" selected>问财</option><option value="em">东财</option><option value="wenda">问达</option><option value="yizhi">一字</option><option value="zhuban">主板</option><option value="chuangban">创板</option></select>
     <button class="btn-icon em-date-btn" id="emDateBtn" style="display:none" title="东财选股日期（按问句回测所选日期，非今日即历史回测）" onclick="openEmDatePicker()">&#128197; <span id="emDateTxt">今日</span></button>
-    <button class="btn-icon em-date-btn" id="aiDateBtn" style="display:none" title="AI 竞价选股日期（只读已有快照的交易日，非回测计算）" onclick="openAiDatePicker()">&#128197; <span id="aiDateTxt">最新</span></button>
     <button class="btn-icon" onclick="location.reload()" title="刷新数据">&#128260;</button>
     <button class="btn-icon" onclick="exportToTdx()" title="加入通达信自定义板块">&#128226;</button>
   </div>
@@ -141,7 +138,7 @@ tbody tr:nth-child(even) td.stk,tbody tr:nth-child(even) td.nm{background:var(--
   <button onclick="runPick()">&#128269; 选股</button>
   <button class="ghost" onclick="saveQuery()">&#128190; 保存问句</button>
   <button class="ghost" onclick="exportCodes()">&#8595; 导出代码</button>
-  <div class="status" id="wencaiStatus">输入问财问句后点【选股】→ 自动填充 22 列（行情/资金流实时刷新）；也可直接在下方手动添加代码。</div>
+  <div class="status" id="wencaiStatus">输入问财问句后点【选股】→ 自动填充 23 列（行情/资金流实时刷新）；也可直接在下方手动添加代码。</div>
 </div>
 <div class="addbar">
   <input id="manualInput" placeholder="输入代码手动加自选，如 600152 002074（空格分隔）" onkeydown="if(event.key==='Enter')addManualCodes(this.value)">
@@ -176,7 +173,8 @@ var API_BASE  = (location.hostname==='111.231.79.7') ? '' : 'http://111.231.79.7
 var YZ_ENDPOINT = 'https://stock-screen-efvfnufnrv.cn-hangzhou.fcapp.run/yz?pz=200';  // 一字选股：阿里云 FC https 后端（同上函数，/yz 路由，原样转发东财 push2dycalc）
 var YZ_DIRECT   = 'https://push2dycalc.eastmoney.com/api/qt/clist/get?fs=m:1+t:2,m:0+t:6,m:0+t:80,m:1+t:23&fltt=2&invt=2&fields=f2,f3,f4,f5,f6,f8,f10,f12,f14,f15,f17,f18,f19,f20,f21,f615,f630,f100,f102,f103,f127&fid=f3&po=1&pn=1&pz=200&np=1&ut=c92c50e6b0fab2c17cd5e276e9a79c42';  // 降级用：原版直连东财（该域名放 ACAO 回写，可作兜底）
 var EM_ENDPOINT = 'https://stock-screen-efvfnufnrv.cn-hangzhou.fcapp.run/em';  // 东财：阿里云 FC https 后端（同上函数，/em 路由）
-var WENDA_ENDPOINT = 'https://stock-screen-efvfnufnrv.cn-hangzhou.fcapp.run/wenda';  // 问达：阿里云 FC https 后端（stock-screen 函数）
+var WENDA_FC_ENDPOINT = 'https://stock-screen-efvfnufnrv.cn-hangzhou.fcapp.run/wenda';  // 问达：阿里云 FC https 后端（https 页面兜底，旧归一化未透传 hs）
+var WENDA_ENDPOINT = 'http://111.231.79.7/pq/wenda';  // 问达：自有代理（2026-11-22 已透传源站开盘换手Z真值，须配合问句追加字段）
 var WENCAI_ENDPOINT = '';  // 问财：留空可用直连（已实测 CORS 全开，无需后端）
 var API_BASE_HTTPS  = 'https://txy.seamining.top';  // 其余通道(东财/AI)：服务器 https 地址（2026-10-09 已配 Let's Encrypt 证书）
 if (API_BASE_HTTPS) API_BASE = API_BASE_HTTPS;
@@ -193,22 +191,37 @@ function jsonp(url, cbName, onDone){
 
 function fmtDateLocal(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 var EM_DATE = fmtDateLocal(new Date());   // 东财回测所选日期（自建弹层写入，不依赖原生 date input）
+// ===== 预置问句数据源（问财通道，切源即自动填入问句，可再编辑） =====
+// ⚠️ 问财四个已知限制（2026-10-13 夜间实测，接口本身正常——"涨停"可回 70 只）：
+//   ① 单句不能同时出现两个复合比值（"竞价金额/昨日成交额" 与 "竞价金额/昨日竞价金额" 同句 → 解析失败返回 0）
+//      ⇒ 原「首板」源已下线；创板同样用 PRESET_SPLIT 拆两句取交集（数学等价）。
+//   ② "昨日涨幅" 与其它条件同句会整体失效（单独可用，组合恒 0；"昨日涨跌幅" 无此问题）
+//      ⇒ 「昨日涨幅」须改写为「昨日涨跌幅」才可与其它条件同句（保留此条备查）。
+//   ③ 乘法必须写 x 不能写 *（* 会被当通配符导致整句失效）；
+//   ④ **复杂公式（带除法）整句会被忽略**——"A x B / C x D >= 1" 单独查竟返回 5561 只（≈全市场，条件形同虚设）；
+//      正确写法是**保留括号原样**："(A*B)/(C*D)>=1"（问财能正确解析，实测 3 只）；
+//      ⚠️ 不要擅自改写成"两边相乘比较"（A x B >= C x D）——虽也能生效但结果更宽松（11 只 ≠ 3 只），语义已失真；
+//      且该公式与其它条件同句仍会整句失效 ⇒ 创板同样拆两句取交集（(A*B)/(C*D)>=1 与原式数学等价）。
+var PRESET_Q = {
+  zhuban:    '主板，非ST，非退市，非新股，竞价涨幅2%~8%，竞价金额>1000万，竞价量>150万，竞价实际换手率>0.9，竞价量比>9，竞价金额/昨日成交额5%~25%',
+  chuangban: '昨日非涨停,创业板,非ST,竞价抢筹,前30天有大于4%的阳线,昨日收盘价/昨日10日线<1.11,(今日竞价量*今日竞价涨跌幅)/(前5个交易日平均成交量*昨日实际换手率)>=1'
+};
+// 需要「拆句取交集」执行的源（输入框仍显示 PRESET_Q 原句，便于阅读理解）
+var PRESET_SPLIT = {
+  chuangban: [
+    '昨日非涨停,创业板,非ST,竞价抢筹,前30天有大于4%的阳线,昨日收盘价/昨日10日线<1.11',
+    '(今日竞价量*今日竞价涨跌幅)/(前5个交易日平均成交量*昨日实际换手率)>=1'
+  ]
+};
+function isPresetSrc(s){ return s==='zhuban' || s==='chuangban'; }
 function onSrcChange(){
   CUR_SRC = document.getElementById('srcSel').value;
-  // ⚠️ 两个日期键目标不同，绝不共用：
-  //   东财 = 按问句「计算」所选日期的回测结果（任意日期可算，源站实时算）；
-  //   AI   = 只读服务器「已抓取并存下来的快照」（只有有快照的交易日可读，没有就是没有）。
+  // 日期键仅东财需要（按问句回测任意日期）；其余源一律隐藏
   var eBtn = document.getElementById('emDateBtn');
-  var aBtn = document.getElementById('aiDateBtn');
   if(eBtn) eBtn.style.display = (CUR_SRC==='em') ? '' : 'none';
-  if(aBtn) aBtn.style.display = (CUR_SRC==='ai') ? '' : 'none';
   if(CUR_SRC==='em'){ if(!EM_DATE) EM_DATE=fmtDateLocal(new Date()); onEmDateChange(EM_DATE); }
-  if(CUR_SRC==='ai'){ loadAiSnapshot(); updateAiDateBtn(); }   // 预热快照日期表
   var ta = document.getElementById('wencaiInput');
-  if(CUR_SRC==='ai'){
-    ta.placeholder='【AI 竞价选股】读取 ai.jiaoyi-gou.com/?p=12 已抓取的竞价选股快照（服务器 jingjia.json），无需输入问句；📅 只能选「已有快照」的交易日。';
-    ta.value = '';
-  } else if(CUR_SRC==='em'){
+  if(CUR_SRC==='em'){
     ta.placeholder='输入东财问句，如：主板或创业板，非ST，非新股，开盘涨幅>9，开盘量比>9，开盘换手Z>0.9\n支持选历史日期（集合竞价涨跌幅/换手率/量比按所选日期返回）';
   } else if(CUR_SRC==='wenda'){
     ta.placeholder='输入问达问句，如：主板或创业板，非ST，非新股，竞价涨幅3到8，竞价量比>9\n（问达使用通达信私有 callTQL 接口，经服务器代理落表，支持盘中资金流刷新）';
@@ -216,6 +229,10 @@ function onSrcChange(){
     ta.placeholder='【一字选股专用】直接调用竞价一字选股模块，按固定逻辑执行选股。';
     // 切换到时，清空输入框
     ta.value = '';
+  } else if(isPresetSrc(CUR_SRC)){
+    // 主板/创板：问财通道的预置问句，自动填入（可改），点【选股】即按此问句选股
+    ta.value = PRESET_Q[CUR_SRC];
+    ta.placeholder='【'+document.getElementById('srcSel').selectedOptions[0].text+'】已按问财问句自动填入，可直接点【选股】，也可自行修改';
   } else {
     ta.placeholder='输入问财问句，如：涨停，去除st，去除北交所\n竞价公式：主板或创业板，非ST，非新股，竞价涨幅3到8，竞价量比大于9.7，竞价实际换手率大于0.09%，竞价金额/昨日成交额大于3%，竞价金额/昨日竞价金额大于3';
   }
@@ -293,14 +310,18 @@ function jyz_sort_date(){ return null; }
 
 // 统一入口：按当前数据源分发
 function runPick(){
-  var q = (document.getElementById('wencaiInput').value || '').trim();
-  if(!q && CUR_SRC !== 'yizhi' && CUR_SRC !== 'ai') { alert('请输入问句'); return; }
+  var ta=document.getElementById('wencaiInput');
+  var q = (ta.value || '').trim();
+  // 预置源（主板/创板）：输入框被清空时用预置问句兜底，保证一键可用
+  if(isPresetSrc(CUR_SRC) && !q && PRESET_Q[CUR_SRC]){ q=PRESET_Q[CUR_SRC]; ta.value=q; }
+  if(!q && CUR_SRC !== 'yizhi') { alert('请输入问句'); return; }
   
   if(CUR_SRC === 'em') return runEastmoney(q);
   if(CUR_SRC === 'wenda') return runWenda(q);
   if(CUR_SRC === 'yizhi') return runYiZhi();  // 一字不需要问句，直接执行
-  if(CUR_SRC === 'ai') return runAi();        // AI 不需要问句，直接拉服务器快照
-  return runWencai();
+  // 创板：问财无法把复杂公式与其它条件放同一句 → 拆两句分别查询取交集
+  if(PRESET_SPLIT[CUR_SRC]) return runWencaiSplit(PRESET_SPLIT[CUR_SRC], PRESET_SPLIT[CUR_SRC].length);
+  return runWencai();   // 问财 / 主板 都走问财通道
 }
 
 // ===== 一字选股 =====
@@ -368,133 +389,6 @@ function runYiZhi(){
   start(window.YZ_ENDPOINT || window.YZ_DIRECT);
 }
 
-// ===== AI 竞价选股（ai.jiaoyi-gou.com/?p=12，经服务器快照 jingjia.json 落表） =====
-// 源站是 Streamlit SPA（数据经 WebSocket+protobuf 推送），手机/浏览器无法直连抓取，
-// 故统一读服务器托管快照：http://111.231.79.7/jingjia.json（PC 每交易日 09:26 自动入库）。
-// 结构：{generated, source, dates:['20261007',…], byDate:{日期:{meta,data:[{code,name,bidChange,bidVol,changePct}]}}}
-var AI_URL = '/jingjia.json';
-function aiCompact(s){ return String(s||'').replace(/-/g,''); }              // 2026-10-07 -> 20261007
-function aiDisplay(d){ d=String(d||''); return d.length===8 ? d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6,8) : d; }
-function aiNum(v){ var n=parseFloat(String(v==null?'':v).replace(/[%,手]/g,'').replace(/,/g,'')); return isFinite(n)?n:null; }
-
-// AI 快照日期表（独立变量，与东财 EM_DATE 完全分离）
-var AI_SNAP = null;      // 整份 jingjia.json 缓存（点选股/开日历都复用，避免重复请求）
-var AI_DATES = [];       // 已有快照的交易日，紧凑格式 20261007，降序
-var AI_DATE = '';        // 当前选择的快照日；'' = 跟随最新交易日
-var AI_PICK_Y = 2026, AI_PICK_M = 10;
-
-function loadAiSnapshot(cb){
-  if(AI_SNAP){ cb&&cb(AI_SNAP); return; }
-  var url=(API_BASE||'')+AI_URL;
-  var ctrl=(window.AbortController)?new AbortController():null;
-  var to=ctrl?setTimeout(function(){ try{ctrl.abort();}catch(e){} },12000):null;
-  fetch(url+(url.indexOf('?')>=0?'&':'?')+'_='+Date.now(),{cache:'no-store',signal:ctrl?ctrl.signal:undefined})
-    .then(function(r){ if(to) clearTimeout(to); return r.json(); })
-    .then(function(j){
-      AI_SNAP=j||null; AI_DATES=(j&&j.dates)||[];
-      updateAiDateBtn(); cb&&cb(AI_SNAP);
-    })
-    .catch(function(){ if(to) clearTimeout(to); AI_SNAP=null; AI_DATES=[]; cb&&cb(null); });
-}
-function updateAiDateBtn(){
-  var b=document.getElementById('aiDateBtn'), t=document.getElementById('aiDateTxt');
-  if(t) t.textContent = AI_DATE ? aiDisplay(AI_DATE).slice(5) : '最新';
-  if(!b) return;
-  if(AI_DATE){ b.classList.add('em-his'); b.title='AI 竞价选股：读取 '+aiDisplay(AI_DATE)+' 的已有快照'; }
-  else { b.classList.remove('em-his'); b.title='AI 竞价选股日期（默认最新交易日；只能选已有快照的交易日）'; }
-}
-
-// ===== AI 独立日期弹层（只渲染「有快照」的日期；无快照置灰不可点） =====
-function openAiDatePicker(){
-  // 真机兼容：与东财弹层同样写一次内联长手样式（旧 WebView 不认 inset 简写）
-  (function(){ var mk=document.getElementById('aiMask'); if(!mk) return;
-    mk.style.position='fixed';
-    mk.style.top='0'; mk.style.right='0'; mk.style.bottom='0'; mk.style.left='0';
-    mk.style.width='100%'; mk.style.height='100%'; mk.style.margin='0'; mk.style.boxSizing='border-box';
-    mk.style.overflowY='auto'; mk.style.overflowX='hidden'; mk.style.webkitOverflowScrolling='touch';
-    mk.style.alignItems='flex-start'; mk.style.justifyContent='center'; mk.style.padding='12px 10px';
-  })();
-  var tip=document.getElementById('aiTip');
-  if(tip && !AI_DATES.length) tip.textContent='正在读取服务器快照日期表…';
-  document.getElementById('aiMask').classList.add('show');
-  var cur = AI_DATE ? new Date(aiDisplay(AI_DATE)+'T00:00:00') : new Date();
-  if(AI_DATES.length && !AI_DATE) cur=new Date(aiDisplay(AI_DATES[0])+'T00:00:00');
-  if(isNaN(cur.getTime())) cur=new Date();
-  AI_PICK_Y=cur.getFullYear(); AI_PICK_M=cur.getMonth()+1;
-  renderAiCal();
-  loadAiSnapshot(function(){          // 异步补齐日期表后重绘（有快照的日子才亮金色）
-    if(tip) tip.textContent='金色边框=服务器已有该交易日快照（可读）；灰色=无快照，不可选';
-    renderAiCal();
-  });
-}
-function renderAiCal(){
-  var y=AI_PICK_Y, m=AI_PICK_M, cal=document.getElementById('aiCal');
-  if(!cal) return;
-  document.getElementById('aiYM').textContent=y+'年'+String(m).padStart(2,'0')+'月';
-  cal.innerHTML='';
-  var wk=['日','一','二','三','四','五','六'];
-  wk.forEach(function(w){ var d=document.createElement('div'); d.className='em-w'; d.textContent=w; cal.appendChild(d); });
-  var first=new Date(y, m-1, 1).getDay(), days=new Date(y, m, 0).getDate();
-  for(var i=0;i<first;i++){ var e=document.createElement('div'); e.className='em-d em-empty'; cal.appendChild(e); }
-  var t=new Date();
-  for(var dd=1; dd<=days; dd++){
-    (function(d){
-      var b=document.createElement('button'); b.type='button'; b.className='em-d'; b.textContent=d;
-      var s=String(y)+String(m).padStart(2,'0')+String(d).padStart(2,'0');
-      var has=AI_DATES.indexOf(s)>=0;
-      if(has) b.classList.add('em-has'); else b.classList.add('em-dis');
-      if(y===t.getFullYear() && m===t.getMonth()+1 && d===t.getDate()) b.classList.add('em-today');
-      if(AI_DATE===s) b.classList.add('em-sel');
-      b.onclick=function(){
-        if(!has){ wqStatus('AI 竞价选股：'+aiDisplay(s)+' 没有已抓取的快照，换一个金色日期'); return; }
-        AI_DATE=s; document.getElementById('aiMask').classList.remove('show');
-        updateAiDateBtn(); wqStatus('已选 AI 快照日 '+aiDisplay(s)+'，点【选股】读取');
-      };
-      cal.appendChild(b);
-    })(dd);
-  }
-}
-function aiPickPrev(){ AI_PICK_M--; if(AI_PICK_M<1){ AI_PICK_M=12; AI_PICK_Y--; } renderAiCal(); }
-function aiPickNext(){ AI_PICK_M++; if(AI_PICK_M>12){ AI_PICK_M=1; AI_PICK_Y++; } renderAiCal(); }
-function setAiQuick(n){   // 0=最新 1=上一交易日 2=前二交易日（按已有快照交易日，不是自然日）
-  if(!AI_DATES.length){ loadAiSnapshot(function(){ setAiQuick(n); }); return; }
-  AI_DATE = AI_DATES[Math.min(n, AI_DATES.length-1)] || '';
-  document.getElementById('aiMask').classList.remove('show');
-  updateAiDateBtn(); wqStatus('已选 AI 快照日 '+aiDisplay(AI_DATE)+'，点【选股】读取');
-}
-function cancelAiDate(){ document.getElementById('aiMask').classList.remove('show'); }
-
-function runAi(){
-  wqStatus('AI 竞价选股（ai.jiaoyi-gou.com/?p=12）读取中…');
-  loadAiSnapshot(function(j){
-      var bd=(j&&j.byDate)||{}, ds=(j&&j.dates)||[];
-      if(!ds.length){ wqStatus('AI 竞价选股失败：服务器快照不可达或为空'); render(); return; }
-      var want=AI_DATE || ds[0];                       // 未选日期 → 最新交易日
-      var di=(ds.indexOf(want)>=0)?want:ds[0];
-      var list=((bd[di]||{}).data)||[];
-      if(!list.length){ wqStatus('AI 竞价选股无结果（'+aiDisplay(di)+'）'); render(); return; }
-      var todayStr=fmtDateLocal(new Date()), dstr=aiDisplay(di), his=(dstr!==todayStr);
-      ROWS=[]; curRows=[]; var added=[];
-      list.forEach(function(d){
-        var code=String(d.code||''); if(!/^\d{6}$/.test(code)) return;
-        if(ROWS.some(function(r){return r.code===code;})) return;
-        var r={code:code,name:d.name||'…',price:null,
-               zf:aiNum(d.bidChange), change_pct:aiNum(d.changePct),   // 源站该交易日的竞价涨幅/当日涨跌幅真值
-               bidVol:d.bidVol||'', hs:null, lb:null, zb:null, bl:null,
-               r0_in:null,r0_out:null,r1_in:null,r1_out:null,r2_in:null,r2_out:null,r3_in:null,r3_out:null,
-               main_in:null, amount_wan:null, main_pct:null, turnover_pct:null, vol_ratio:null,
-               manual:true, emHis:his, lockZf:his};   // lockZf：回测日锁定开盘涨幅/涨跌幅，不被腾讯实时覆盖
-        ROWS.push(r); curRows.push(r); added.push(r);
-      });
-      META.date=dstr;
-      AI_DATE=di; updateAiDateBtn();
-      var extra=(want!==di)?('（'+aiDisplay(want)+' 无快照，已回退最新交易日）'):'';
-      wqStatus('AI 竞价选股返回 '+added.length+' 只（'+dstr+extra+'，快照生成 '+(j&&j.generated||'—')+'）');
-      fetchManual(added);   // 补腾讯实时行情（lockZf 保护竞价真值）→ 自动接新浪 8 档资金流
-      render();
-  });
-}
-
 // ===== 东财选股 =====
 function applyEastmoney(d){
   var di = EM_DATE || fmtDateLocal(new Date());
@@ -512,13 +406,17 @@ function applyEastmoney(d){
     if(!/^\d{6}$/.test(code)) return;
     if(ROWS.some(function(r){return r.code===code;})) return;
     var a=parseEastmoney(cols,row);
-    var r={code:code,name:name,price:a.price,zf:a.zf,change_pct:a.change_pct,hs:a.hs,lb:a.lb,zb:a.zb,bl:a.bl,
+    var r={code:code,name:name,price:a.price,zf:a.zf,change_pct:a.change_pct,hs:a.hs,lb:a.lb,zb:a.zb,bl:a.bl, kld:null,
            r0_in:null,r0_out:null,r1_in:null,r1_out:null,r2_in:null,r2_out:null,r3_in:null,r3_out:null,
            main_in:null, amount_wan:a.amount_wan, main_pct:null, turnover_pct:a.turnover_pct, vol_ratio:a.vol_ratio, manual:true, emHis:(di!==today)};
     ROWS.push(r); curRows.push(r); added.push(r);
   });
-  wqStatus('东财返回 '+added.length+' 只（'+di+'，集合竞价字段已含，资金流为今日实时）');
+  wqStatus('东财返回 '+added.length+' 只（'+di+'，资金流为今日实时，竞价昨比/开盘昨比由腾讯补算）');
   fetchManualFlow(added);   // 仅补新浪资金流；集合竞价字段保留东财所选日期值（不受盘中刷新覆盖）
+  // ★ 东财历史回测(emHis)：bl/zb 用东财所选日期源站值，保留不覆盖（day/query 只有今日/昨日，无法回溯历史）
+  //   东财今日：bl/zb 东财问句通常不含"昨比/今竞昨竞"列 → 用腾讯 day/query 一并补算（与问财/问达同口径）
+  var liveRows=added.filter(function(r){ return !r.emHis; });
+  if(liveRows.length) fetchDayQueryBl(liveRows, function(){ render(); });
   render();
 }
 // 东财选股：浏览器直连优先（东财 ACAO 按请求 Origin 回写，托管页 http://111.231.79.7 与本地 file:// 均放行，无需服务器）；
@@ -530,6 +428,14 @@ function runEastmoney(q){
   var today = fmtDateLocal(new Date());
   wqStatus((di===today ? '东财选股（今日实时·直连）' : '东财历史回测 '+di+'（直连）')+' 选股中…');
   var kw = (di===today) ? q : (di+';'+q);   // 非今日：参考页写法，日期拼到问句前（东财据此回测历史）
+  // ★ 东财只返回问句中出现的字段列：若问句未含「开盘换手Z/开盘量比」，这两列不返回 → 开盘换手Z/开盘量比/开盘力度三列空白。
+  //   实测：问句末尾追加纯字段名「开盘换手Z，开盘量比」(无阈值) 可让东财补出竞价换手率/量比列，且不改变筛选结果(rows数不变)。
+  (function(){
+    var extras=[];
+    if(!/开盘换手|竞价换手/.test(q)) extras.push('开盘换手Z');
+    if(!/开盘量比|竞价量比/.test(q)) extras.push('开盘量比');
+    if(extras.length) kw += '，'+extras.join('，');
+  })();
   // 直连优先：东财 ACAO 按请求 Origin 回写（托管页 http://111.231.79.7 与本地文件 null 均放行）
   var body = JSON.stringify({keyWord:kw, pageSize:1000, pageNo:1, fingerprint:EM_FP, date:di});
   var ctrl = (window.AbortController) ? new AbortController() : null;
@@ -583,9 +489,20 @@ function parseAmtWan(v){
 // 代理把归一化 JSON 回传，此处落表并由 fetchManual 补全实时行情 + 新浪资金流（盯盘生效）。
 // 若服务器宕机/代理不可达（jsonp 返回 null 或 __error__），回退跳窗到问达源网页，保证“至少能查”。
 function runWenda(q){
-  wqStatus('问达选股中（callTQL 经阿里云 FC 后端）…');
+  // ★ 2026-11-22：照搬东财解法——问句末尾预加纯字段名（不带阈值，不改变筛选结果）。
+  //   实测问达源站 TQL 会因此多返回「开盘自由换手率(%)」「竞价量」「自由流通股本」三列；
+  //   两个字段必须同时追加（只加「开盘换手Z」会解析失败落 getAllCode），代理已把首列透传为 hs。
+  (function(){
+    var extras=[];
+    if(!/开盘换手/.test(q)) extras.push('开盘换手Z');
+    if(!/开盘量比/.test(q)) extras.push('开盘量比');
+    if(extras.length) q += '，'+extras.join('，');
+  })();
+  // https 页面走 FC（避免混合内容），其余走自有代理（能拿到 hs 真值）
+  var wdEp=(location.protocol==='https:' && WENDA_FC_ENDPOINT) ? WENDA_FC_ENDPOINT : (WENDA_ENDPOINT||(API_BASE+'/pq/wenda'));
+  wqStatus('问达选股中（问句已追加开盘换手Z/开盘量比，callTQL 经后端代理）…');
   var cb='jjyl_wd_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
-  var url=(WENDA_ENDPOINT||(API_BASE+'/pq/wenda'))+'?message='+encodeURIComponent(q);
+  var url=wdEp+'?message='+encodeURIComponent(q);
   var done=false;
   // https 页面 + 后端仍是 http → 浏览器会按混合内容直接拦截，请求根本发不出去，
   //   且 script 标签被拦不会触发 onerror，只能干等 15s。这里提前判定并即时兜底。
@@ -622,14 +539,17 @@ function applyWenda(d){
     if(ROWS.some(function(r){return r.code===code;})) return;
     var r={code:code, name:it.name||'…', price:(it.price!=null?it.price:null),
            zf:(it.zf!=null?it.zf:null), change_pct:(it.change_pct!=null?it.change_pct:null),
-           hs:null, lb:(it.lb!=null?it.lb:null), zb:null, bl:null,
+           hs:(it.hs!=null?it.hs:null), lb:(it.lb!=null?it.lb:null),
+           free_shares:(it.free_shares!=null?it.free_shares:null), zb:null, bl:null, kld:null,
            r0_in:null,r0_out:null,r1_in:null,r1_out:null,r2_in:null,r2_out:null,r3_in:null,r3_out:null,
-           main_in:null, amount_wan:null, main_pct:null, turnover_pct:null, vol_ratio:null, manual:true};
+           main_in:null, amount_wan:null, main_pct:null, turnover_pct:null, vol_ratio:null, manual:true, src:'wenda'};
     ROWS.push(r); curRows.push(r); added.push(r);
   });
-  // 问达只回开盘涨幅/涨跌幅/竞价量比，其余竞价字段缺失；META.date 始终为今日（问达不支持历史回测）
+  // ★ 问句追加字段后，代理透传源站「开盘自由换手率(%)」→ hs 真值；META.date 始终为今日（问达不支持历史回测）
+  //   仅当代理未返回 hs（如 https 页面走 FC 旧后端）时，才由 fetchDayQueryBl 用 day/query 补算。
+  //   开盘昨比/竞价昨比 始终由 day/query 补算（源站无此两列）。
   META.date=fmtDateLocal(new Date());
-  wqStatus('问达返回 '+added.length+' 只（开盘涨幅/涨跌幅/竞价量比已含，正在补全实时行情与资金流…）');
+  wqStatus('问达返回 '+added.length+' 只（开盘换手Z取源站真值，昨比字段由腾讯 day/query 补算中…）');
   fetchManual(added);   // 腾讯实时行情 + 新浪8档资金流（与问财同链路，盯盘刷新生效）
   render();
 }
@@ -645,6 +565,7 @@ var COLS = [
   {k:'lb',           t:'开盘量比',  l:0, ty:'num', c:''},
   {k:'zb',           t:'开盘昨比',  l:0, ty:'num', c:''},
   {k:'bl',           t:'竞价昨比',  l:0, ty:'num', c:''},
+  {k:'kld',          t:'开盘力度',  l:0, ty:'num', c:'', tip:'开盘换手Z/开盘昨比*10'},
   {k:'r0_in', t:'超大单入(万元)', l:0, ty:'num', c:'in'},
   {k:'r1_in', t:'大单入',        l:0, ty:'num', c:'in'},
   {k:'r2_in', t:'中单入',        l:0, ty:'num', c:'in'},
@@ -660,7 +581,7 @@ var COLS = [
   {k:'vol_ratio',   t:'量比',   l:0, ty:'num', c:'vr'}
 ];
 
-var sortState = {idx:19, asc:false};
+var sortState = {idx:20, asc:false};   // 默认按「主净比%」降序（插列后索引 20）
 var curRows = ROWS.slice();
 
 function fmt(v){
@@ -701,6 +622,11 @@ function favorable(r){
 function prefix(code){ return (code[0]==='6'||code[0]==='9')?'sh':'sz'; }
 
 function render(){
+  // 派生列：开盘力度 = 开盘换手Z / 开盘昨比 × 10（两者任一缺失或开盘昨比为0 → 显示「—」）
+  ROWS.forEach(function(r){
+    if(r.hs!=null && r.zb!=null && r.zb!==0 && isFinite(r.hs) && isFinite(r.zb)) r.kld=r.hs/r.zb*10;
+    else r.kld=null;
+  });
   var tbl=document.getElementById('tbl');
   var thead=document.querySelector('#tbl thead'), tbody=document.querySelector('#tbl tbody');
   thead.innerHTML='';
@@ -708,6 +634,7 @@ function render(){
   COLS.forEach(function(c,i){
     var th=document.createElement('th');
     th.className=(c.l?'lft ':'')+(i===0?'stk ':'')+(i===1?'nm ':'');
+    if(c.tip) th.title=c.tip;
     th.innerHTML=c.t+'<span class="ar">'+(sortState.idx===i?(sortState.asc?'▲':'▼'):'⇅')+'</span>';
     th.onclick=function(){ if(sortState.idx===i) sortState.asc=!sortState.asc; else {sortState.idx=i;sortState.asc=true;} render(); };
     tr.appendChild(th);
@@ -761,7 +688,7 @@ function addManualCodes(raw){
   var added=[];
   list.forEach(function(c){
     if(ROWS.some(function(r){return r.code===c;})) return;   // 去重
-    var r={code:c, name:'…', price:null, zf:null, change_pct:null, hs:null, lb:null, zb:null, bl:null,
+    var r={code:c, name:'…', price:null, zf:null, change_pct:null, hs:null, lb:null, zb:null, bl:null, kld:null,
            r0_in:null,r0_out:null,r1_in:null,r1_out:null,r2_in:null,r2_out:null,r3_in:null,r3_out:null,
            main_in:null, amount_wan:null, main_pct:null, turnover_pct:null, vol_ratio:null, manual:true};
     ROWS.push(r); curRows.push(r); added.push(r);
@@ -770,6 +697,62 @@ function addManualCodes(raw){
   var inp=document.getElementById('manualInput'); if(inp) inp.value='';
   fetchManual(added);
   render();
+}
+// ===== 竞价昨比 bl + 开盘昨比 zb：腾讯 day/query 直连（一次请求同时算两个比值）=====
+// day/query 每日首条(0930) = 纯集合竞价撮合：'HHMM 开盘价 竞价量(手) 竞价额(元)'
+// 已实测：竞价量×100×开盘价 == 竞价额(8股误差0.000%)，故首条第4项=竞价金额
+// days 按日期倒序：[今日, 昨日, ...]（近5交易日）
+//   bl(竞价昨比倍数) = 今竞价额/昨竞价额×100×0.01（原百分比×0.01）
+//   zb(开盘昨比%)   = 今竞价额/昨日全天成交额×100；昨日全天额 = 昨日数据末条(1500)第4项累计额
+//   hs(开盘换手Z%)  = 今日全天换手率 × 今竞价量/今全天量（实测4股4/4匹配东财集合竞价换手率真值）
+//   lb(开盘量比)    = 今竞价量/(近5日全天量之和/1200)（通达信 open_volume_ratio 权威公式；仅问达行缺失时补算）
+function fetchDayQueryBl(rows, done){
+  var todo=(rows||[]).filter(function(r){ return r && r.code; });
+  if(!todo.length){ if(done) done(); return; }
+  var idx=0, CONC=6, left=todo.length;
+  function one(){
+    if(idx>=todo.length) return;   // 取完不发新请求；done 只由 left===0 统一触发，避免竞态提前回调
+    var r=todo[idx++];
+    var code=fullCode(r.code);
+    fetch('https://web.ifzq.gtimg.cn/appstock/app/day/query?code='+code+'&_='+Date.now())
+      .then(function(resp){ return resp.json(); })
+      .then(function(d){
+        var node=d && d.data && d.data[code];
+        var days=node && node.data;
+        if(days && days.length>=2){
+          var cur=String(days[0].data[0]).split(' ');   // 今日 0930 竞价撮合
+          var pre=String(days[1].data[0]).split(' ');   // 昨日 0930 竞价撮合
+          var preDay=String(days[1].data[days[1].data.length-1]).split(' ');  // 昨日末条(1500)=全天累计
+          var curAmt=Number(cur[3]), preAmt=Number(pre[3]), preDayAmt=Number(preDay[3]);
+          if(curAmt>0 && preAmt>0) r.bl=Math.round(curAmt/preAmt*10000)/100*0.01;  // 竞价昨比倍数 = 原百分比×0.01，保留2位
+          if(curAmt>0 && preDayAmt>0) r.zb=Math.round(curAmt/preDayAmt*10000)/100;  // 开盘昨比% = 今竞价额/昨全天成交额×100，保留2位
+          // 开盘换手Z/开盘量比：问达行严格按用户口径用 day/query 真算（源站 hs 仅作交叉校验/兜底）
+          if(r.src==='wenda'){
+            var curVol=Number(cur[2]);                                   // 今竞价量(手) = 0930 首条第3项
+            var curLast=String(days[0].data[days[0].data.length-1]).split(' ');
+            var fullVol=Number(curLast[2]);                              // 今全天量(手)
+            var fullTurn=fnum(r.turnover_pct);                           // 今全天换手率%(腾讯行情已补)
+            // ★ 用户铁律口径：开盘换手Z% = 竞价量(股)/自由流通股×100；自由流通股由问达问句追加字段透传
+            if(curVol>0 && r.free_shares>0)
+              r.hs=Math.round(curVol*100/r.free_shares*10000)/100;       // 手→股，百分比保留2位
+            else if(r.hs==null && fullTurn>0 && fullVol>0 && curVol>0)
+              r.hs=Math.round(fullTurn*curVol/fullVol*100)/100;          // 无自由流通股时兜底（全天换手率×竞价量/全天量）
+            var vols=[];
+            for(var vi=0;vi<days.length && vi<5;vi++){
+              var last=String(days[vi].data[days[vi].data.length-1]).split(' ');
+              var vv=Number(last[2]); if(vv>0) vols.push(vv);
+            }
+            if(vols.length>=5 && curVol>0){
+              var avgMin=vols.reduce(function(a,b){return a+b;},0)/1200; // 近5日全天量和/(240×5)
+              if(avgMin>0 && r.lb==null) r.lb=Math.round(curVol/avgMin*100)/100;  // 仅问达缺lb时补，有真值不覆盖
+            }
+          }
+        }
+      })
+      .catch(function(){ /* 取数失败保留原值（问财口径/问达真值/—） */ })
+      .then(function(){ left--; if(left===0 && done) done(); else one(); });
+  }
+  for(var i=0;i<CONC && i<todo.length;i++) one();
 }
 function fetchManual(rows){
   var codes=rows.map(function(r){return fullCode(r.code);}).join(',');
@@ -787,12 +770,20 @@ function fetchManual(rows){
       // 开盘涨幅% 统一用腾讯实时算的今日开盘涨幅=(今开sp5-昨收sp4)/昨收sp4×100（问财"竞价涨幅"盘后返回历史旧值，不可信）
       if(!r.lockZf && fnum(p[4]) && fnum(p[5])) r.zf=(fnum(p[5])-fnum(p[4]))/fnum(p[4])*100;
       // 开盘量比/换手：问财竞价口径优先（真实竞价时点，与 auction.html 同口径），缺失时回退腾讯全天量比/换手率(sp49/sp38)
-      if(r.lb==null) r.lb=fnum(p[49]);
-      if(r.hs==null) r.hs=fnum(p[38]);
-      // zb(开盘昨比%)/bl(竞价昨比) 由问财竞价口径直接返回（竞价金额/昨日成交额、竞价金额/昨日竞价金额），与 auction.html 公式三同源；前端不再自行计算。人工代码腾讯无此数据→"—"。
+      // ★ 问达行(src=wenda)禁止用腾讯全天值冒充：hs/lb 以问句追加字段后源站真值为准；仅 hs 缺失时由 day/query 兜底
+      if(r.src==='wenda'){
+        // 保留问达真值 hs(开盘自由换手率)/lb(竞价量比)，仅记录全天换手率供 day/query 兜底使用
+        r.turnover_pct=fnum(p[38]);
+      }else{
+        if(r.lb==null) r.lb=fnum(p[49]);
+        if(r.hs==null) r.hs=fnum(p[38]);
+      }
+      // zb(开盘昨比%)/bl(竞价昨比) 改用腾讯 day/query 直连计算（一次请求同时算）；lockZf 历史回测保留源站值不覆盖。
     });
     render();                 // 先显示行情/名称，再补资金流
     fetchManualFlow(rows);
+    var blRows=rows.filter(function(r){ return !r.lockZf; });
+    if(blRows.length) fetchDayQueryBl(blRows, function(){ render(); });  // 竞价昨比bl+开盘昨比zb 用腾讯 day/query 一并覆盖
   };
   s.onerror=function(){ try{s.parentNode.removeChild(s);}catch(e){} };
   document.body.appendChild(s);
@@ -945,6 +936,29 @@ function applySinaFlow(data, rows){
   }
 }
 function wqStatus(s){ var el=document.getElementById('wencaiStatus'); if(el) el.textContent=s||''; }
+// 问财结果 → 23 列行（base=代码集/名称，wf=带竞价字段的结果；tag=状态栏后缀说明）
+function applyWencaiRows(base, wf, tag){
+  var amap = {}; (wf||[]).forEach(function(x){ if(x&&x.code) amap[x.code]=x.vals; });
+  // 选股=重新选择：清空后用结果重建（与参考网页一致）
+  ROWS=[]; curRows=[];
+  var added=[];
+  base.forEach(function(b){
+    if(ROWS.some(function(r){return r.code===b.code;})) return;
+    var a = parseAuction(amap[b.code]||{});
+    var r={code:b.code, name:b.name||'…', price:null, zf:null, change_pct:null, hs:null, lb:null, zb:null, bl:null, kld:null,
+           r0_in:null,r0_out:null,r1_in:null,r1_out:null,r2_in:null,r2_out:null,r3_in:null,r3_out:null,
+           main_in:null, amount_wan:null, main_pct:null, turnover_pct:null, vol_ratio:null, manual:true};
+    // 开盘涨幅% 不采用问财"竞价涨幅"（问财盘后返回历史旧值，非今日真实开盘），统一由腾讯 (今开-昨收)/昨收 实时计算
+    if(a.lb!=null) r.lb=a.lb;   // 开盘量比=问财竞价量比（与 auction.html 同口径）
+    if(a.hs!=null) r.hs=a.hs;   // 开盘换手Z=问财竞价实际换手率（与 auction.html 同口径）
+    if(a.zb!=null) r.zb=a.zb;
+    if(a.bl!=null) r.bl=a.bl;
+    ROWS.push(r); curRows.push(r); added.push(r);
+  });
+  wqStatus('问财返回 '+added.length+' 只'+(tag||'')+'（竞价指标已含开盘昨比/竞价昨比），正在补全实时行情与资金流…');
+  fetchManual(added);
+  render();
+}
 function runWencai(){
   var q=(document.getElementById('wencaiInput').value||'').trim();
   if(!q){ alert('请输入问财问句'); return; }
@@ -954,26 +968,30 @@ function runWencai(){
     .then(function(res){
       var base = res[0]||[], wf = res[1]||[];
       if(!base.length){ wqStatus('问财无结果（该问句当日无匹配，或接口暂不可用）'); render(); return; }
-      var amap = {}; wf.forEach(function(x){ if(x&&x.code) amap[x.code]=x.vals; });
-      // 选股=重新选择：清空后用结果重建（与参考网页一致）
-      ROWS=[]; curRows=[];
-      var added=[];
-      base.forEach(function(b){
-        if(ROWS.some(function(r){return r.code===b.code;})) return;
-        var a = parseAuction(amap[b.code]||{});
-        var r={code:b.code, name:b.name||'…', price:null, zf:null, change_pct:null, hs:null, lb:null, zb:null, bl:null,
-               r0_in:null,r0_out:null,r1_in:null,r1_out:null,r2_in:null,r2_out:null,r3_in:null,r3_out:null,
-               main_in:null, amount_wan:null, main_pct:null, turnover_pct:null, vol_ratio:null, manual:true};
-        // 开盘涨幅% 不采用问财"竞价涨幅"（问财盘后返回历史旧值，非今日真实开盘），统一由腾讯 (今开-昨收)/昨收 实时计算
-        if(a.lb!=null) r.lb=a.lb;   // 开盘量比=问财竞价量比（与 auction.html 同口径）
-        if(a.hs!=null) r.hs=a.hs;   // 开盘换手Z=问财竞价实际换手率（与 auction.html 同口径）
-        if(a.zb!=null) r.zb=a.zb;
-        if(a.bl!=null) r.bl=a.bl;
-        ROWS.push(r); curRows.push(r); added.push(r);
+      applyWencaiRows(base, wf);
+    })
+    .catch(function(e){ wqStatus('问财请求失败：'+(e&&e.message?e.message:e)); });
+}
+// 创板专用：问财单句放不下复杂公式，拆成多句分别查询后取交集，
+// 语义与原句一致（每个条件都满足）。交集为空时给出可判读的提示，便于区分"今天真无票"与"问句写错"。
+var CUR_SPLIT_TAG = '';
+function runWencaiSplit(queries){
+  CUR_SPLIT_TAG = '（'+queries.length+'句交集）';
+  wqStatus('问财选股中（拆分'+queries.length+'句取交集）…');
+  Promise.all(queries.map(function(q){ return wencaiPick(q,false); }))
+    .then(function(lists){
+      if(!lists.length || !lists[0].length){
+        wqStatus('问财无结果（首条件即无匹配：'+queries[0]+'）'); render(); return;
+      }
+      var inter = lists[0].filter(function(x){
+        return lists.slice(1).every(function(L){ return L.some(function(y){ return y.code===x.code; }); });
       });
-      wqStatus('问财返回 '+added.length+' 只（竞价指标已含开盘昨比/竞价昨比），正在补全实时行情与资金流…');
-      fetchManual(added);
-      render();
+      if(!inter.length){
+        wqStatus('问财无结果（两句条件交集为空：各句命中 '+lists.map(function(L){return L.length;}).join(' / ')+' 只；说明当日确无同时满足全部条件的股票）');
+        ROWS=[]; curRows=[]; render(); return;
+      }
+      // 竞价字段用第一句补（交集必在第一句结果内）
+      return wencaiPick(queries[0], true).then(function(wf){ applyWencaiRows(inter, wf, CUR_SPLIT_TAG); });
     })
     .catch(function(e){ wqStatus('问财请求失败：'+(e&&e.message?e.message:e)); });
 }
@@ -1141,27 +1159,6 @@ startLive();
     </div>
     <div class="acts">
       <button type="button" onclick="cancelEmDate()">取消</button>
-    </div>
-  </div>
-</div>
-<!-- AI 竞价选股：独立日期弹层（只读已有快照交易日；与东财「按问句回测任意日期」目标不同，故不共用） -->
-<div class="em-mask" id="aiMask" onclick="if(event.target===this)cancelAiDate()">
-  <div class="em-pk">
-    <h3>AI 竞价选股 · 选择快照日</h3>
-    <div class="em-cal-head">
-      <button type="button" class="em-nav" onclick="aiPickPrev()">&#8249;</button>
-      <div class="em-ym" id="aiYM">2026年10月</div>
-      <button type="button" class="em-nav" onclick="aiPickNext()">&#8250;</button>
-    </div>
-    <div class="em-tip" id="aiTip">金色边框=服务器已有该交易日快照（可读）；灰色=无快照，不可选</div>
-    <div class="em-cal" id="aiCal"></div>
-    <div class="quick">
-      <button type="button" onclick="setAiQuick(0)">最新</button>
-      <button type="button" onclick="setAiQuick(1)">上一交易日</button>
-      <button type="button" onclick="setAiQuick(2)">前二交易日</button>
-    </div>
-    <div class="acts">
-      <button type="button" onclick="cancelAiDate()">取消</button>
     </div>
   </div>
 </div>
