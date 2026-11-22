@@ -174,7 +174,7 @@ var YZ_ENDPOINT = 'https://stock-screen-efvfnufnrv.cn-hangzhou.fcapp.run/yz?pz=2
 var YZ_DIRECT   = 'https://push2dycalc.eastmoney.com/api/qt/clist/get?fs=m:1+t:2,m:0+t:6,m:0+t:80,m:1+t:23&fltt=2&invt=2&fields=f2,f3,f4,f5,f6,f8,f10,f12,f14,f15,f17,f18,f19,f20,f21,f615,f630,f100,f102,f103,f127&fid=f3&po=1&pn=1&pz=200&np=1&ut=c92c50e6b0fab2c17cd5e276e9a79c42';  // 降级用：原版直连东财（该域名放 ACAO 回写，可作兜底）
 var EM_ENDPOINT = 'https://stock-screen-efvfnufnrv.cn-hangzhou.fcapp.run/em';  // 东财：阿里云 FC https 后端（同上函数，/em 路由）
 var WENDA_FC_ENDPOINT = 'https://stock-screen-efvfnufnrv.cn-hangzhou.fcapp.run/wenda';  // 问达：阿里云 FC https 后端（https 页面兜底，旧归一化未透传 hs）
-var WENDA_ENDPOINT = 'http://111.231.79.7/pq/wenda';  // 问达：自有代理（2026-11-22 已透传源站开盘换手Z真值，须配合问句追加字段）
+var WENDA_ENDPOINT = 'https://111.231.79.7/pq/wenda';  // 问达：自有代理 https（2026-11-22 已透传源站 hs+free_shares；https 页面也可用，避免回退 FC 丢自由流通股）
 var WENCAI_ENDPOINT = '';  // 问财：留空可用直连（已实测 CORS 全开，无需后端）
 var API_BASE_HTTPS  = 'https://txy.seamining.top';  // 其余通道(东财/AI)：服务器 https 地址（2026-10-09 已配 Let's Encrypt 证书）
 if (API_BASE_HTTPS) API_BASE = API_BASE_HTTPS;
@@ -511,8 +511,9 @@ function runWenda(q){
     if(!/开盘量比/.test(q)) extras.push('开盘量比');
     if(extras.length) q += '，'+extras.join('，');
   })();
-  // https 页面走 FC（避免混合内容），其余走自有代理（能拿到 hs 真值）
-  var wdEp=(location.protocol==='https:' && WENDA_FC_ENDPOINT) ? WENDA_FC_ENDPOINT : (WENDA_ENDPOINT||(API_BASE+'/pq/wenda'));
+  // ★ 2026-11-22：WENDA_ENDPOINT 已是 https，file/http/https 页面统一走自有代理（透传 hs+free_shares）。
+  //   FC 旧后端不返回自由流通股 ⇒ 开盘换手Z 会退化为流通股本口径（错误），仅当自有代理未配置时才兜底。
+  var wdEp=(WENDA_ENDPOINT && /^https:/.test(WENDA_ENDPOINT)) ? WENDA_ENDPOINT : ((location.protocol==='https:' && WENDA_FC_ENDPOINT) ? WENDA_FC_ENDPOINT : (WENDA_ENDPOINT||(API_BASE+'/pq/wenda')));
   wqStatus('问达选股中（问句已追加开盘换手Z/开盘量比，callTQL 经后端代理）…');
   var cb='jjyl_wd_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
   var url=wdEp+'?message='+encodeURIComponent(q);
