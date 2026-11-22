@@ -735,8 +735,48 @@ function addManualCodes(raw){
   });
   if(added.length===0){ alert('所选代码已在列表中'); return; }
   var inp=document.getElementById('manualInput'); if(inp) inp.value='';
-  fetchManual(added);
+  enrichManualWithEM(added);   // ★ 手动代码 5 列对齐东财问句（与一字入口同源）
   render();
+}
+// ===== ★ 手动添加代码：5 列走东财问句补数（与东财问句/一字入口完全同源） =====
+// 问句用「代码含A或B…」+ 纯字段名（不改筛选），返回自由流通股本/集合竞价换手率/集合竞价量比；
+// hs 由 day/query 按自由流通股口径重算，zb/bl 由 day/query 补，kld 派生；lb 用东财源站真值。
+function enrichManualWithEM(rows){
+  if(!rows||!rows.length) return;
+  var di=EM_DATE||fmtDateLocal(new Date());
+  var kw='代码含'+rows.map(function(r){return r.code;}).join('或')+'，开盘涨幅，开盘换手Z，开盘量比，自由流通股本';
+  // 标记为本链路：禁止腾讯全天换手率/量比冒充 hs/lb；未匹配到东财的行 5 列留「—」（数据不足）
+  rows.forEach(function(r){ r.src='em'; r.emManual=true; });
+  var body=JSON.stringify({keyWord:kw, pageSize:1000, pageNo:1, fingerprint:EM_FP, date:di});
+  fetch(EM_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:body})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d&&d.code==='100'&&d.data&&d.data.result&&d.data.result.dataList&&d.data.result.dataList.length) mergeEMIntoManual(d,rows);
+      else emManualViaServer(kw,di,rows);
+    })
+    .catch(function(){ emManualViaServer(kw,di,rows); });
+}
+function emManualViaServer(kw,di,rows){
+  var cb='jjyl_emman_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
+  var url=(EM_ENDPOINT||(API_BASE+'/pq/em'))+'?keyWord='+encodeURIComponent(kw)+'&date='+encodeURIComponent(di)+'&fp='+EM_FP;
+  jsonp(url,cb,function(d){ if(d&&d.code==='100'&&d.data&&d.data.result&&d.data.result.dataList&&d.data.result.dataList.length) mergeEMIntoManual(d,rows); else fetchManual(rows); });
+}
+function mergeEMIntoManual(d,rows){
+  var cols=d.data.result.columns||[], dl=d.data.result.dataList||[], map={}, n=0;
+  dl.forEach(function(row){
+    var c=String(row.SECURITY_CODE||'').split('.')[0];
+    if(!/^\d{6}$/.test(c)) return;
+    map[c]=parseEastmoney(cols,row); n++;
+  });
+  rows.forEach(function(r){
+    var a=map[r.code]; if(!a) return;   // 未匹配：hs/lb 留 null ⇒ 显示「—」（数据不足）
+    if(a.zf!=null) r.zf=a.zf;
+    if(a.hs!=null) r.hs=a.hs;
+    if(a.lb!=null) r.lb=a.lb;
+    r.free_shares=(a.free_shares!=null?a.free_shares:null);
+  });
+  wqStatus('手动代码东财补数 '+n+' 只（开盘换手Z=自由流通股口径，开盘量比=源站真值）');
+  fetchManual(rows);   // 腾讯行情+新浪资金流+day/query(zb/bl/hs 重算)
 }
 // ===== 竞价昨比 bl + 开盘昨比 zb：腾讯 day/query 直连（一次请求同时算两个比值）=====
 // day/query 每日首条(0930) = 纯集合竞价撮合：'HHMM 开盘价 竞价量(手) 竞价额(元)'
@@ -777,8 +817,8 @@ function fetchDayQueryBl(rows, done){
             var fullTurn=fnum(r.turnover_pct);                           // 今全天换手率%(腾讯行情已补)
             if(curVol>0 && r.free_shares>0)
               r.hs=Math.round(curVol*100/r.free_shares*10000)/100;       // 手→股，百分比保留2位
-            else if(r.hs==null && fullTurn>0 && fullVol>0 && curVol>0)
-              r.hs=Math.round(fullTurn*curVol/fullVol*100)/100;          // 无自由流通股时兜底（流通股本口径，仅临时）
+            else if(!r.emManual && r.hs==null && fullTurn>0 && fullVol>0 && curVol>0)
+              r.hs=Math.round(fullTurn*curVol/fullVol*100)/100;          // 无自由流通股时兜底（流通股本口径，仅临时）；手动行禁用，缺失显示「—」
           }
         }
       })
@@ -804,8 +844,8 @@ function fetchManual(rows){
       if(!r.lockZf && fnum(p[4]) && fnum(p[5])) r.zf=(fnum(p[5])-fnum(p[4]))/fnum(p[4])*100;
       // 开盘量比/换手：问财竞价口径优先（真实竞价时点，与 auction.html 同口径），缺失时回退腾讯全天量比/换手率(sp49/sp38)
       // ★ 问达行(src=wenda)禁止用腾讯全天值冒充：hs/lb 以问句追加字段后源站真值为准；仅 hs 缺失时由 day/query 兜底
-      if(r.src==='wenda'){
-        // 保留问达真值 hs(开盘自由换手率)/lb(竞价量比)，仅记录全天换手率供 day/query 兜底使用
+      // ★ emManual（手动添加经东财补数）：hs/lb 为东财真值，禁止腾讯全天值冒充；仅记录全天换手率供 day/query 用
+      if(r.src==='wenda' || r.emManual){
         r.turnover_pct=fnum(p[38]);
       }else{
         if(r.lb==null) r.lb=fnum(p[49]);
