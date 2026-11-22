@@ -338,28 +338,54 @@ function runYiZhi(){
       render();
       return;
     }
-    var added = [];
-    stocks.forEach(function(s) {
+    // ★ 2026-11-22：一字选出的代码 → 走东财问句补数，使「开盘换手Z/开盘量比/开盘昨比/竞价昨比/开盘力度」
+    //   5 列的数据源及算法与「东财问句」完全一致：
+    //   hs=东财源站自由流通股口径重算、lb=东财源站集合竞价量比、zb/bl=腾讯day/query、kld=hs/zb×10。
+    //   实测东财问句「代码含A或B...(84只)」可一次返回全部所需列，筛选集合不变。
+    var codes=[];
+    stocks.forEach(function(s){ if(/^\d{6}$/.test(s.code) && codes.indexOf(s.code)<0) codes.push(s.code); });
+    if(!codes.length){ wqStatus('一字选股无有效代码（'+di+'）'); render(); return; }
+    EM_DATE = di;   // 东财补数日期与一字选股日期对齐
+    wqStatus('一字选股 '+codes.length+' 只，正用东财问句补齐竞价5列…');
+    var kw='代码含'+codes.join('或');
+    (function(){
+      var extras=[];
+      if(!/开盘涨幅|竞价涨/.test(kw)) extras.push('开盘涨幅');
+      if(!/开盘换手|竞价换手/.test(kw)) extras.push('开盘换手Z');
+      if(!/开盘量比|竞价量比/.test(kw)) extras.push('开盘量比');
+      if(!/自由流通股本/.test(kw)) extras.push('自由流通股本');
+      if(extras.length) kw+='，'+extras.join('，');
+    })();
+    var body=JSON.stringify({keyWord:kw, pageSize:1000, pageNo:1, fingerprint:EM_FP, date:di});
+    fetch(EM_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:body})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(d && d.code==='100' && d.data && d.data.result && d.data.result.dataList && d.data.result.dataList.length){
+          applyEastmoney(d);   // 与东财问句同一落表链路（src:'em' + free_shares + day/query 补算 5 列）
+        } else {
+          yzFallback(stocks);  // 东财补数失败 → 保留一字原始信息落表
+        }
+      })
+      .catch(function(){ yzFallback(stocks); });
+  }
+
+  // 东财补数失败兜底：一字原始信息落表（5 列留空，与改动前行为一致）
+  function yzFallback(stocks){
+    var added=[];
+    stocks.forEach(function(s){
       if (ROWS.some(function(r) { return r.code === s.code; })) return;
       var r = {
-        code: s.code,
-        name: s.name,
-        price: s.price || null,
-        zf: s.bidChange || null,
-        change_pct: s.realChange || null,
-        hs: null, lb: null, zb: null, bl: null,
+        code: s.code, name: s.name, price: s.price || null,
+        zf: s.bidChange || null, change_pct: s.realChange || null,
+        hs: null, lb: null, zb: null, bl: null, kld:null,
         r0_in:null, r0_out:null, r1_in:null, r1_out:null,
         r2_in:null, r2_out:null, r3_in:null, r3_out:null,
         main_in:null, amount_wan:null, main_pct:null,
-        turnover_pct:null, vol_ratio:null,
-        manual:true,
-        emHis:(di !== today)
+        turnover_pct:null, vol_ratio:null, manual:true, emHis:(di !== today)
       };
-      ROWS.push(r);
-      curRows.push(r);
-      added.push(r);
+      ROWS.push(r); curRows.push(r); added.push(r);
     });
-    wqStatus('一字选股返回 '+added.length+' 只（'+di+', 接口已过滤）');
+    wqStatus('一字选股返回 '+added.length+' 只（东财补数失败，5列暂缺）');
     fetchManual(added);
     render();
   }
