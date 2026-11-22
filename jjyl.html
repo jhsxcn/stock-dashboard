@@ -363,10 +363,10 @@ function runYiZhi(){
         if(d && d.code==='100' && d.data && d.data.result && d.data.result.dataList && d.data.result.dataList.length){
           applyEastmoney(d);   // 与东财问句同一落表链路（src:'em' + free_shares + day/query 补算 5 列）
         } else {
-          yzFallback(stocks);  // 东财补数失败 → 保留一字原始信息落表
+          emViaServer(kw, di); // 直连空结果 → 服务器代理兜底（与东财问句入口同款，Pages https 页靠它绕过 CORS）
         }
       })
-      .catch(function(){ yzFallback(stocks); });
+      .catch(function(){ emViaServer(kw, di); });  // CORS/网络失败 → 服务器代理兜底（JSONP 不受 CORS 限制）
   }
 
   // 东财补数失败兜底：一字原始信息落表（5 列留空，与改动前行为一致）
