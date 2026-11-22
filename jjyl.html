@@ -407,6 +407,7 @@ function applyEastmoney(d){
     if(ROWS.some(function(r){return r.code===code;})) return;
     var a=parseEastmoney(cols,row);
     var r={code:code,name:name,price:a.price,zf:a.zf,change_pct:a.change_pct,hs:a.hs,lb:a.lb,zb:a.zb,bl:a.bl, kld:null,
+           src:'em', free_shares:(a.free_shares!=null?a.free_shares:null),
            r0_in:null,r0_out:null,r1_in:null,r1_out:null,r2_in:null,r2_out:null,r3_in:null,r3_out:null,
            main_in:null, amount_wan:a.amount_wan, main_pct:null, turnover_pct:a.turnover_pct, vol_ratio:a.vol_ratio, manual:true, emHis:(di!==today)};
     ROWS.push(r); curRows.push(r); added.push(r);
@@ -435,6 +436,7 @@ function runEastmoney(q){
     if(!/开盘涨幅|竞价涨/.test(q)) extras.push('开盘涨幅');
     if(!/开盘换手|竞价换手/.test(q)) extras.push('开盘换手Z');
     if(!/开盘量比|竞价量比/.test(q)) extras.push('开盘量比');
+    if(!/自由流通股本/.test(q)) extras.push('自由流通股本');   // ★ 用户口径：开盘换手Z=竞价量/自由流通股，须取源站自由流通股本
     if(extras.length) kw += '，'+extras.join('，');
   })();
   // 直连优先：东财 ACAO 按请求 Origin 回写（托管页 http://111.231.79.7 与本地文件 null 均放行）
@@ -476,7 +478,10 @@ function parseEastmoney(cols,row){
   var vol_ratio    = m(function(t){ return t.indexOf('量比')>=0 && t.indexOf('开盘')<0 && t.indexOf('竞价')<0; });
   var amount_wan=null;
   for(var i=0;i<cols.length;i++){ var t=String(cols[i].title||''); if(t.indexOf('成交额')>=0 && t.indexOf('开盘')<0 && t.indexOf('竞价')<0){ amount_wan=parseAmtWan(row[cols[i].key]); break; } }
-  return {price:price,zf:zf,change_pct:change_pct,hs:hs,lb:lb,zb:zb,bl:bl,turnover_pct:turnover_pct,vol_ratio:vol_ratio,amount_wan:amount_wan};
+  // ★ 源站自由流通股本(股)：如"6.10亿"→610000000，用于按用户口径重算开盘换手Z
+  var free_shares=null;
+  for(var i=0;i<cols.length;i++){ var t=String(cols[i].title||''); if(t.indexOf('自由流通股本')>=0){ free_shares=parseAmtShares(row[cols[i].key]); break; } }
+  return {price:price,zf:zf,change_pct:change_pct,hs:hs,lb:lb,zb:zb,bl:bl,turnover_pct:turnover_pct,vol_ratio:vol_ratio,amount_wan:amount_wan,free_shares:free_shares};
 }
 function parseAmtWan(v){
   if(v==null) return null;
@@ -484,6 +489,13 @@ function parseAmtWan(v){
   if(s.indexOf('亿')>=0) return n*10000;
   if(s.indexOf('万')>=0) return n;
   return n/10000;
+}
+function parseAmtShares(v){
+  if(v==null) return null;
+  var s=String(v).replace(/[,，\s]/g,'').trim(); var n=parseFloat(s); if(isNaN(n)) return null;
+  if(s.indexOf('亿')>=0) return Math.round(n*1e8);
+  if(s.indexOf('万')>=0) return Math.round(n*1e4);
+  return Math.round(n);
 }
 // ===== 问达选股（通达信私有 callTQL；经阿里云 FC https 后端代理，支持盘中资金流刷新） =====
 // 问达会话机制（固定 ASPSessionID + 空RI首调）无法在浏览器直连完成，必须走 https 后端代理（阿里云 FC stock-screen）；
@@ -727,25 +739,29 @@ function fetchDayQueryBl(rows, done){
           var curAmt=Number(cur[3]), preAmt=Number(pre[3]), preDayAmt=Number(preDay[3]);
           if(curAmt>0 && preAmt>0) r.bl=Math.round(curAmt/preAmt*10000)/100*0.01;  // 竞价昨比倍数 = 原百分比×0.01，保留2位
           if(curAmt>0 && preDayAmt>0) r.zb=Math.round(curAmt/preDayAmt*10000)/100;  // 开盘昨比% = 今竞价额/昨全天成交额×100，保留2位
-          // 开盘换手Z/开盘量比：问达行严格按用户口径用 day/query 真算（源站 hs 仅作交叉校验/兜底）
-          if(r.src==='wenda'){
+          // 开盘换手Z/开盘量比：问达行 + 东财今日行都按用户口径用 day/query 真算（源站 hs 仅作兜底）
+          if(r.src==='wenda' || r.src==='em'){
             var curVol=Number(cur[2]);                                   // 今竞价量(手) = 0930 首条第3项
             var curLast=String(days[0].data[days[0].data.length-1]).split(' ');
             var fullVol=Number(curLast[2]);                              // 今全天量(手)
             var fullTurn=fnum(r.turnover_pct);                           // 今全天换手率%(腾讯行情已补)
-            // ★ 用户铁律口径：开盘换手Z% = 竞价量(股)/自由流通股×100；自由流通股由问达问句追加字段透传
+            // ★ 用户铁律口径：开盘换手Z% = 竞价量(股)/自由流通股×100
+            //   问达：自由流通股由问句追加字段透传；东财：问句追加「自由流通股本」由源站返回
+            //   ★ 东财源站「集合竞价换手率」是流通股本口径(=全天换手率×竞价量/全天量)，非用户口径，必须重算
             if(curVol>0 && r.free_shares>0)
               r.hs=Math.round(curVol*100/r.free_shares*10000)/100;       // 手→股，百分比保留2位
             else if(r.hs==null && fullTurn>0 && fullVol>0 && curVol>0)
-              r.hs=Math.round(fullTurn*curVol/fullVol*100)/100;          // 无自由流通股时兜底（全天换手率×竞价量/全天量）
-            var vols=[];
-            for(var vi=0;vi<days.length && vi<5;vi++){
-              var last=String(days[vi].data[days[vi].data.length-1]).split(' ');
-              var vv=Number(last[2]); if(vv>0) vols.push(vv);
-            }
-            if(vols.length>=5 && curVol>0){
-              var avgMin=vols.reduce(function(a,b){return a+b;},0)/1200; // 近5日全天量和/(240×5)
-              if(avgMin>0 && r.lb==null) r.lb=Math.round(curVol/avgMin*100)/100;  // 仅问达缺lb时补，有真值不覆盖
+              r.hs=Math.round(fullTurn*curVol/fullVol*100)/100;          // 无自由流通股时兜底（流通股本口径，仅临时）
+            if(r.src==='wenda'){
+              var vols=[];
+              for(var vi=0;vi<days.length && vi<5;vi++){
+                var last=String(days[vi].data[days[vi].data.length-1]).split(' ');
+                var vv=Number(last[2]); if(vv>0) vols.push(vv);
+              }
+              if(vols.length>=5 && curVol>0){
+                var avgMin=vols.reduce(function(a,b){return a+b;},0)/1200; // 近5日全天量和/(240×5)
+                if(avgMin>0 && r.lb==null) r.lb=Math.round(curVol/avgMin*100)/100;  // 仅问达缺lb时补，有真值不覆盖
+              }
             }
           }
         }
