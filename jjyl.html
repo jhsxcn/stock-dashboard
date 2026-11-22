@@ -718,8 +718,9 @@ function addManualCodes(raw){
 // days 按日期倒序：[今日, 昨日, ...]（近5交易日）
 //   bl(竞价昨比倍数) = 今竞价额/昨竞价额×100×0.01（原百分比×0.01）
 //   zb(开盘昨比%)   = 今竞价额/昨日全天成交额×100；昨日全天额 = 昨日数据末条(1500)第4项累计额
-//   hs(开盘换手Z%)  = 今日全天换手率 × 今竞价量/今全天量（实测4股4/4匹配东财集合竞价换手率真值）
-//   lb(开盘量比)    = 今竞价量/(近5日全天量之和/1200)（通达信 open_volume_ratio 权威公式；仅问达行缺失时补算）
+//   hs/lb 取值口径：问达行直接用源站真值（问句加「开盘换手Z/开盘量比」即返回竞价实际换手率/竞价量比，无需换算）。
+//   东财行源站「集合竞价换手率」是流通股本口径（非自由流通股），故仍需用竞价量/自由流通股重算 hs；lb 东财源站真值直接用。
+//   day/query 仅负责 bl/zb（源站无此两列）。
 function fetchDayQueryBl(rows, done){
   var todo=(rows||[]).filter(function(r){ return r && r.code; });
   if(!todo.length){ if(done) done(); return; }
@@ -740,30 +741,18 @@ function fetchDayQueryBl(rows, done){
           var curAmt=Number(cur[3]), preAmt=Number(pre[3]), preDayAmt=Number(preDay[3]);
           if(curAmt>0 && preAmt>0) r.bl=Math.round(curAmt/preAmt*10000)/100*0.01;  // 竞价昨比倍数 = 原百分比×0.01，保留2位
           if(curAmt>0 && preDayAmt>0) r.zb=Math.round(curAmt/preDayAmt*10000)/100;  // 开盘昨比% = 今竞价额/昨全天成交额×100，保留2位
-          // 开盘换手Z/开盘量比：问达行 + 东财今日行都按用户口径用 day/query 真算（源站 hs 仅作兜底）
-          if(r.src==='wenda' || r.src==='em'){
+          // ★ 问达行(src=wenda)：hs(开盘换手Z=竞价实际换手率)/lb(开盘量比=竞价量比) 直接用源站真值，不做任何换算。
+          //   仅东财今日行(src=em)需重算 hs：东财源站「集合竞价换手率」是流通股本口径(=全天换手率×竞价量/全天量)，
+          //   非自由流通股口径，故按用户公式 竞价量(股)/自由流通股×100 重算；东财 lb 源站真值直接用。
+          if(r.src==='em'){
             var curVol=Number(cur[2]);                                   // 今竞价量(手) = 0930 首条第3项
             var curLast=String(days[0].data[days[0].data.length-1]).split(' ');
             var fullVol=Number(curLast[2]);                              // 今全天量(手)
             var fullTurn=fnum(r.turnover_pct);                           // 今全天换手率%(腾讯行情已补)
-            // ★ 用户铁律口径：开盘换手Z% = 竞价量(股)/自由流通股×100
-            //   问达：自由流通股由问句追加字段透传；东财：问句追加「自由流通股本」由源站返回
-            //   ★ 东财源站「集合竞价换手率」是流通股本口径(=全天换手率×竞价量/全天量)，非用户口径，必须重算
             if(curVol>0 && r.free_shares>0)
               r.hs=Math.round(curVol*100/r.free_shares*10000)/100;       // 手→股，百分比保留2位
             else if(r.hs==null && fullTurn>0 && fullVol>0 && curVol>0)
               r.hs=Math.round(fullTurn*curVol/fullVol*100)/100;          // 无自由流通股时兜底（流通股本口径，仅临时）
-            if(r.src==='wenda'){
-              var vols=[];
-              for(var vi=0;vi<days.length && vi<5;vi++){
-                var last=String(days[vi].data[days[vi].data.length-1]).split(' ');
-                var vv=Number(last[2]); if(vv>0) vols.push(vv);
-              }
-              if(vols.length>=5 && curVol>0){
-                var avgMin=vols.reduce(function(a,b){return a+b;},0)/1200; // 近5日全天量和/(240×5)
-                if(avgMin>0 && r.lb==null) r.lb=Math.round(curVol/avgMin*100)/100;  // 仅问达缺lb时补，有真值不覆盖
-              }
-            }
           }
         }
       })
