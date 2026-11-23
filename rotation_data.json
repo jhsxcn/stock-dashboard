@@ -77847,5 +77847,87 @@
    "src": "kpl",
    "phase": "冰点"
   }
+ },
+ "2026-11-23": {
+  "机器人概念": {
+   "rank": 1,
+   "score": 56038,
+   "fund": 91.26,
+   "pct": 4.485,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "AI应用": {
+   "rank": 2,
+   "score": 15450,
+   "fund": 22.93,
+   "pct": 3.525,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "芯片": {
+   "rank": 3,
+   "score": 10302,
+   "fund": 39.55,
+   "pct": 3.575,
+   "src": "kpl",
+   "phase": "高潮"
+  },
+  "商业航天": {
+   "rank": 4,
+   "score": 7684,
+   "fund": 13.12,
+   "pct": 3.568,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "算力": {
+   "rank": 5,
+   "score": 7325,
+   "fund": 13.38,
+   "pct": 3.324,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "端侧AI": {
+   "rank": 6,
+   "score": 7022,
+   "fund": 21.02,
+   "pct": 4.287,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "PCB概念": {
+   "rank": 7,
+   "score": 6482,
+   "fund": 45.09,
+   "pct": 4.447,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "汽车零部件": {
+   "rank": 8,
+   "score": 4920,
+   "fund": 14.05,
+   "pct": 4.093,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "文化传媒": {
+   "rank": 9,
+   "score": 4468,
+   "fund": 15.12,
+   "pct": 4.354,
+   "src": "kpl",
+   "phase": "启动"
+  },
+  "物理AI": {
+   "rank": 10,
+   "score": 4255,
+   "fund": 11.97,
+   "pct": 5.522,
+   "src": "kpl",
+   "phase": "启动"
+  }
  }
 }
