@@ -619,7 +619,7 @@ var COLS = [
   {k:'main_pct', t:'主净比%', l:0, ty:'num', c:'sg'},
   {k:'turnover_pct', t:'换手率%', l:0, ty:'num', c:'turn'},
   {k:'vol_ratio',   t:'量比',   l:0, ty:'num', c:'vr'},
-  {k:'nld',         t:'量能力度', l:0, ty:'num', c:'', tip:'(实际换手率/(今全天量/昨全天量)*100)*10，实际换手率=成交量(股)/自由流通股本'}
+  {k:'nld',         t:'量能力度', l:0, ty:'num', c:'', tip:'(实际换手率/量比*100)*10*0.01*10，实际换手率=成交量(股)/自由流通股本，量比=腾讯实时量比p49（盘中刷新）'}
 ];
 
 var sortState = {idx:20, asc:false};   // 默认按「主净比%」降序（插列后索引 20）
@@ -788,16 +788,15 @@ function mergeEMIntoManual(d,rows){
 //   hs/lb 取值口径：问达行直接用源站真值（问句加「开盘换手Z/开盘量比」即返回竞价实际换手率/竞价量比，无需换算）。
 //   东财行源站「集合竞价换手率」是流通股本口径（非自由流通股），故仍需用竞价量/自由流通股重算 hs；lb 东财源站真值直接用。
 //   day/query 仅负责 bl/zb（源站无此两列）。
-// ★ 量能力度 nld = (实际换手率/(今全天量/昨全天量)*100)*10  （用户公式，2026-11-24 修正100倍）
-//   实际换手率 = 成交量(股)/自由流通股本 = 今全天量(手)×100/自由流通股本(股)，为小数(如0.0419)；公式内已有*100，勿再乘！
-//   今昨全天量取腾讯 day/query 末条第3项（缓存 r._curFullVol/_preFullVol）
-//   free_shares 由东财问句/问达代理透传，缺失则显示「—」（数据不足，不编造）
+// ★ 量能力度 nld = (实际换手率/量比*100)*10  （2026-11-24 修订：分母改用腾讯实时量比p49，盘中随量比/换手率刷新）
+//   实际换手率 = 成交量(股)/自由流通股本 = 今累计量(手)×100/自由流通股本(股)，小数口径(如0.0164)；公式内已有*100，勿再乘！
+//   ★ 关键：原分母(今量/昨量)与分子同含今量会被约掉⇒恒为常数(昨量×10⁷/free)，故改分母为独立的腾讯量比p49(r.vol_ratio)，盘中实时变化。
+//   分子今累计量：盘中取腾讯p36(r._curFullVol，每6秒刷新)，选股时由 day/query 末条第3项初始化；free_shares 由东财问句/问达代理透传，缺失显示「—」
 function calcNld(r){
-  var cur=r._curFullVol, pre=r._preFullVol;
-  if(cur>0 && pre>0 && r.free_shares>0 && isFinite(r.free_shares)){
+  var cur=r._curFullVol, lb=r.vol_ratio;                  // lb=腾讯量比p49（与左侧「量比」列同源，盘中实时）
+  if(cur>0 && lb>0 && r.free_shares>0 && isFinite(r.free_shares)){
     var hsFull=cur*100/r.free_shares;                     // 实际换手率(小数)=成交量(股)/自由流通股本；公式内已有*100，勿再乘
-    var volYest=cur/pre;                                  // 今全天量/昨全天量
-    r.nld=Math.round(hsFull/volYest*100*10*100)/100;      // ×100×10，保留2位
+    r.nld=Math.round(hsFull/lb*100*10*100)/100*0.01*10;   // ÷实时量比 ×100 ×10，保留2位后×0.01，再×10（用户要求，累计×0.1）
   } else r.nld=null;
 }
 function fetchDayQueryBl(rows, done){
@@ -857,6 +856,7 @@ function fetchManual(rows){
       // lockZf（AI/东财历史回测日）：开盘涨幅%与涨跌幅% 用源站该交易日真值，禁止被腾讯实时覆盖
       if(!r.lockZf) r.change_pct=fnum(p[32]);
       r.amount_wan=fnum(p[37]); r.turnover_pct=fnum(p[38]); r.vol_ratio=fnum(p[49]);
+      r._curFullVol=fnum(p[36]);   // 今累计量(手)，供量能力度 nld 用（p36/p49 实时口径）
       // 开盘涨幅% 统一用腾讯实时算的今日开盘涨幅=(今开sp5-昨收sp4)/昨收sp4×100（问财"竞价涨幅"盘后返回历史旧值，不可信）
       if(!r.lockZf && fnum(p[4]) && fnum(p[5])) r.zf=(fnum(p[5])-fnum(p[4]))/fnum(p[4])*100;
       // 开盘量比/换手：问财竞价口径优先（真实竞价时点，与 auction.html 同口径），缺失时回退腾讯全天量比/换手率(sp49/sp38)
@@ -1196,6 +1196,8 @@ function refreshQuotes(){
       var p=raw.split('~'); if(p.length<50) return;
       r.price=fnum(p[3]); r.change_pct=fnum(p[32]);
       r.amount_wan=fnum(p[37]); r.turnover_pct=fnum(p[38]); r.vol_ratio=fnum(p[49]);
+      // ★ 量能力度随盘中刷新：p36=今累计量(手)作分子，p49=量比作分母，均为腾讯实时字段
+      r._curFullVol=fnum(p[36]); calcNld(r);
       // zb/bl 为问财竞价口径快照（开盘即定），盘中不随成交额变化，保持代理返回原值
     });
     recompute(); try{s.parentNode.removeChild(s);}catch(e){}
