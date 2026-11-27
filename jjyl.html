@@ -100,6 +100,9 @@ tbody tr:nth-child(even) td.stk,tbody tr:nth-child(even) td.nm{background:var(--
 .vr-hi{color:var(--green);font-weight:600}
 .vr-mid{color:var(--green)}
 .dim{color:var(--muted)}
+.fs-top{color:var(--red);font-weight:700}
+.fs-good{color:var(--red);font-weight:600}
+.fs-mid{color:var(--text);font-weight:600}
 .note{font-size:11px;color:var(--muted);padding:8px 10px;line-height:1.6}
 .badge{display:inline-block;background:var(--accent);color:#fff;border-radius:10px;font-size:11px;padding:1px 7px;margin-left:6px}
 .addbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 10px;background:var(--bg-card);border-bottom:1px solid var(--border)}
@@ -354,6 +357,7 @@ function runYiZhi(){
       if(!/开盘换手|竞价换手/.test(kw)) extras.push('开盘换手Z');
       if(!/开盘量比|竞价量比/.test(kw)) extras.push('开盘量比');
       if(!/自由流通股本/.test(kw)) extras.push('自由流通股本');
+      if(!/封单金额|封单额/.test(kw)) extras.push('封单金额');   // ★ 资金评分封单组
       if(extras.length) kw+='，'+extras.join('，');
     })();
     var body=JSON.stringify({keyWord:kw, pageSize:1000, pageNo:1, fingerprint:EM_FP, date:di});
@@ -377,7 +381,7 @@ function runYiZhi(){
       var r = {
         code: s.code, name: s.name, price: s.price || null,
         zf: s.bidChange || null, change_pct: s.realChange || null,
-        hs: null, lb: null, zb: null, bl: null, kld:null,
+        hs: null, lb: null, zb: null, bl: null, kld:null, seal_amt:null,
         r0_in:null, r0_out:null, r1_in:null, r1_out:null,
         r2_in:null, r2_out:null, r3_in:null, r3_out:null,
         main_in:null, amount_wan:null, main_pct:null,
@@ -433,7 +437,7 @@ function applyEastmoney(d){
     if(ROWS.some(function(r){return r.code===code;})) return;
     var a=parseEastmoney(cols,row);
     var r={code:code,name:name,price:a.price,zf:a.zf,change_pct:a.change_pct,hs:a.hs,lb:a.lb,zb:a.zb,bl:a.bl, kld:null,
-           src:'em', free_shares:(a.free_shares!=null?a.free_shares:null),
+           src:'em', free_shares:(a.free_shares!=null?a.free_shares:null), seal_amt:(a.seal_amt!=null?a.seal_amt:null),
            r0_in:null,r0_out:null,r1_in:null,r1_out:null,r2_in:null,r2_out:null,r3_in:null,r3_out:null,
            main_in:null, amount_wan:a.amount_wan, main_pct:null, turnover_pct:a.turnover_pct, vol_ratio:a.vol_ratio, manual:true, emHis:(di!==today)};
     ROWS.push(r); curRows.push(r); added.push(r);
@@ -463,6 +467,7 @@ function runEastmoney(q){
     if(!/开盘换手|竞价换手/.test(q)) extras.push('开盘换手Z');
     if(!/开盘量比|竞价量比/.test(q)) extras.push('开盘量比');
     if(!/自由流通股本/.test(q)) extras.push('自由流通股本');   // ★ 用户口径：开盘换手Z=竞价量/自由流通股，须取源站自由流通股本
+    if(!/封单金额|封单额/.test(q)) extras.push('封单金额');    // ★ 资金评分：封单组3项依赖封单额（东财支持，问达不支持走东财补数）
     if(extras.length) kw += '，'+extras.join('，');
   })();
   // 直连优先：东财 ACAO 按请求 Origin 回写（托管页 http://111.231.79.7 与本地文件 null 均放行）
@@ -507,7 +512,10 @@ function parseEastmoney(cols,row){
   // ★ 源站自由流通股本(股)：如"6.10亿"→610000000，用于按用户口径重算开盘换手Z
   var free_shares=null;
   for(var i=0;i<cols.length;i++){ var t=String(cols[i].title||''); if(t.indexOf('自由流通股本')>=0){ free_shares=parseAmtShares(row[cols[i].key]); break; } }
-  return {price:price,zf:zf,change_pct:change_pct,hs:hs,lb:lb,zb:zb,bl:bl,turnover_pct:turnover_pct,vol_ratio:vol_ratio,amount_wan:amount_wan,free_shares:free_shares};
+  // ★ 2026-11-28：封单额（元）— 东财问句加「封单金额」后返回「涨停封单额」列("6.01亿"/"4302.04万")，供资金评分
+  var seal_amt=null;
+  for(var i=0;i<cols.length;i++){ var t=String(cols[i].title||''); if(t.indexOf('封单额')>=0 || t.indexOf('封单金额')>=0){ seal_amt=parseAmtYuan(row[cols[i].key]); break; } }
+  return {price:price,zf:zf,change_pct:change_pct,hs:hs,lb:lb,zb:zb,bl:bl,turnover_pct:turnover_pct,vol_ratio:vol_ratio,amount_wan:amount_wan,free_shares:free_shares,seal_amt:seal_amt};
 }
 function parseAmtWan(v){
   if(v==null) return null;
@@ -522,6 +530,14 @@ function parseAmtShares(v){
   if(s.indexOf('亿')>=0) return Math.round(n*1e8);
   if(s.indexOf('万')>=0) return Math.round(n*1e4);
   return Math.round(n);
+}
+// 封单额解析 → 元：东财带单位字符串("6.01亿"/"4302.04万")、问财纯数字元(43020388.74) 统一成元
+function parseAmtYuan(v){
+  if(v==null) return null;
+  var s=String(v).replace(/[,，\s]/g,'').trim(); var n=parseFloat(s); if(isNaN(n)) return null;
+  if(s.indexOf('亿')>=0) return n*1e8;
+  if(s.indexOf('万')>=0) return n*1e4;
+  return n;  // 纯数字=元
 }
 // ===== 问达选股（通达信私有 callTQL；经阿里云 FC https 后端代理，支持盘中资金流刷新） =====
 // 问达会话机制（固定 ASPSessionID + 空RI首调）无法在浏览器直连完成，必须走 https 后端代理（阿里云 FC stock-screen）；
@@ -582,7 +598,7 @@ function applyWenda(d){
     var r={code:code, name:it.name||'…', price:(it.price!=null?it.price:null),
            zf:(it.zf!=null?it.zf:null), change_pct:(it.change_pct!=null?it.change_pct:null),
            hs:(it.hs!=null?it.hs:null), lb:(it.lb!=null?it.lb:null),
-           free_shares:(it.free_shares!=null?it.free_shares:null), zb:null, bl:null, kld:null,
+           free_shares:(it.free_shares!=null?it.free_shares:null), zb:null, bl:null, kld:null, seal_amt:null,
            r0_in:null,r0_out:null,r1_in:null,r1_out:null,r2_in:null,r2_out:null,r3_in:null,r3_out:null,
            main_in:null, amount_wan:null, main_pct:null, turnover_pct:null, vol_ratio:null, manual:true, src:'wenda'};
     ROWS.push(r); curRows.push(r); added.push(r);
@@ -600,10 +616,10 @@ function applyWenda(d){
 //   若直接用它则「开盘换手Z」「昨日换手」都会显示「—」。这里用东财问句按代码补齐这两项
 //   （自由流通股口径），不改问达源的 code/name/price/lb；自有代理返回完整字段时自动跳过。
 function enrichWendaFieldsViaEM(rows){
-  var need=(rows||[]).filter(function(r){ return r && (r.hs==null || r.free_shares==null); });
+  var need=(rows||[]).filter(function(r){ return r && (r.hs==null || r.free_shares==null || r.seal_amt==null); });
   if(!need.length) return;
   var di=fmtDateLocal(new Date());
-  var kw='代码含'+need.map(function(r){return r.code;}).join('或')+'，开盘涨幅，开盘换手Z，开盘量比，自由流通股本';
+  var kw='代码含'+need.map(function(r){return r.code;}).join('或')+'，开盘涨幅，开盘换手Z，开盘量比，自由流通股本，封单金额';
   function merge(d){
     if(!d||d.code!=='100'||!d.data||!d.data.result||!d.data.result.dataList||!d.data.result.dataList.length) return;
     var cols=d.data.result.columns||[], map={};
@@ -618,6 +634,7 @@ function enrichWendaFieldsViaEM(rows){
       if(r.free_shares==null && a.free_shares!=null) r.free_shares=a.free_shares;
       if(r.lb==null && a.lb!=null) r.lb=a.lb;
       if(r.zf==null && a.zf!=null) r.zf=a.zf;
+      if(r.seal_amt==null && a.seal_amt!=null) r.seal_amt=a.seal_amt;   // ★ 封单额供资金评分（问达不支持，走东财补）
       calcNld(r);   // ★ 补齐 free_shares 后立即重算 nld（否则要等 6s 轮询才出数，表现为「量能力度无数据」）
       n++;
     });
@@ -639,6 +656,7 @@ function enrichWendaFieldsViaEM(rows){
 var COLS = [
   {k:'code',    t:'代码',     l:1, ty:'str', c:''},
   {k:'name',    t:'名称',     l:1, ty:'str', c:''},
+  {k:'fundScore', t:'资金评分', l:0, ty:'num', c:'fs', tip:'满分100=封单组50(封单额12/封成比20/封流比18)+主力组50(主力净额12/主力占比20/主力净比18)。达标满分、未达标按比例；竞价/未涨停时封单额缺失→封单组计0、上限50。鼠标悬停看6项明细。'},
   {k:'price',        t:'现价',      l:0, ty:'num', c:''},
   {k:'zf',           t:'开盘涨幅%', l:0, ty:'num', c:''},
   {k:'change_pct',   t:'涨跌幅%',   l:0, ty:'num', c:''},
@@ -663,7 +681,7 @@ var COLS = [
   {k:'nld',         t:'量能力度', l:0, ty:'num', c:'', tip:'(实际换手率/量比*100)*10*0.01*10，实际换手率=成交量(股)/自由流通股本，量比=腾讯实时量比p49（盘中刷新）'}
 ];
 
-var sortState = {idx:20, asc:false};   // 默认按「主净比%」降序（插列后索引 20）
+var sortState = {idx:21, asc:false};   // 默认按「主净比%」降序（2026-11-28 插入资金评分列后索引 20→21）
 var curRows = ROWS.slice();
 
 function fmt(v){
@@ -676,6 +694,13 @@ function fmt(v){
 }
 function cellClass(col,row){
   var v=row[col.k];
+  if(col.c==='fs'){  // 资金评分：≥80 红加粗 ≥60 红 ≥40 常规 否则暗
+    if(v===null||v===undefined) return 'dim';
+    if(v>=80) return 'fs-top';
+    if(v>=60) return 'fs-good';
+    if(v>=40) return 'fs-mid';
+    return 'dim';
+  }
   if(col.c==='in'||col.c==='out') return col.c;
   if(col.c==='sg'){ // 主净比%/主力净入：正红负绿
     if(v===null||v===undefined) return '';
@@ -703,6 +728,59 @@ function favorable(r){
 }
 function prefix(code){ return (code[0]==='6'||code[0]==='9')?'sh':'sz'; }
 
+// ===== ★ 资金评分（2026-11-28，用户6项口径）=====
+// 封单组50：封单额12(>1亿)/封成比20(>10%)/封流比18(>2%)
+// 主力组50：主力净额12(>2亿)/主力占比20(>10%)/主力净比18(>2%)
+// 达标=满分权重；未达标按比例 score=w×min(实际/阈值,1)；缺数据=0分（不编造）。
+// 封单额仅涨停票有值⇒竞价/未涨停时封单组3项记0，总分上限50；盘中/盘后涨停票6项齐全上限100。
+// 主力净比分母=(自由流通股本/总股本)×AB股总市值，恒等于 自由流通股本×现价 ⇒ 用 free_shares×price，无需新增字段。
+var FUND_ITEMS=[
+  {k:'fd',  t:'封单额',   w:12, th:1e8, unit:'元', num:1},
+  {k:'fcb', t:'封成比',   w:20, th:10,  unit:'%',  num:0},
+  {k:'flb', t:'封流比',   w:18, th:2,   unit:'%',  num:0},
+  {k:'mn',  t:'主力净额', w:12, th:2e8, unit:'元', num:1},
+  {k:'mp',  t:'主力占比', w:20, th:10,  unit:'%',  num:0},
+  {k:'mr',  t:'主力净比', w:18, th:2,   unit:'%',  num:0}
+];
+function fmtFundVal(v,num){
+  if(v==null||!isFinite(v)) return '—';
+  if(num) return (Math.abs(v)>=1e8 ? (v/1e8).toFixed(2)+'亿' : (v/1e4).toFixed(0)+'万');
+  return (Math.round(v*100)/100)+'%';
+}
+function calcFundScore(r){
+  var seal=r.seal_amt;                                            // 封单额(元)
+  var amt =(r.amount_wan!=null && r.amount_wan>0)? r.amount_wan*1e4 : null;  // 成交额(元)
+  var main=(r.main_in!=null)? r.main_in*1e4 : null;               // 主力净额(元)=特大+大单
+  var fs  =r.free_shares, px=r.price;                             // 自由流通股本(股)/现价(元)
+  var ffmv=(fs>0 && px>0 && isFinite(fs) && isFinite(px)) ? fs*px : null;    // 自由流通市值(元)
+  var v={
+    fd : seal,
+    fcb: (seal!=null && amt>0)? seal/amt*100 : null,
+    flb: (seal!=null && fs>0)?  seal/fs*100  : null,
+    mn : main,
+    mp : (main!=null && amt>0)? main/amt*100 : null,
+    mr : (main!=null && ffmv>0)? main/ffmv*100 : null
+  };
+  var total=0, parts=[];
+  FUND_ITEMS.forEach(function(it){
+    var x=v[it.k], has=(x!=null && isFinite(x)), s=0;
+    if(has){ var ratio=x/it.th; s=it.w*Math.min(Math.max(ratio,0),1); }
+    total+=s;
+    parts.push({t:it.t, w:it.w, th:it.th, val:has?x:null, s:Math.round(s*100)/100, hit:has&&x>=it.th, unit:it.unit, num:it.num});
+  });
+  r.fundScore=Math.round(total*100)/100;
+  r.fundParts=parts;
+  return r.fundScore;
+}
+function fundTip(r){
+  if(!r.fundParts) return '';
+  var lines=r.fundParts.map(function(p){
+    return p.t+' '+p.s+'/'+p.w+'分｜'+(p.val==null?'数据不足':fmtFundVal(p.val,p.num)+' / 阈值>'+fmtFundVal(p.th,p.num))+(p.hit?' ✓':'');
+  });
+  var sealMiss=(r.seal_amt==null);
+  return '资金评分 '+r.fundScore+' / 100'+(sealMiss?'（封单额缺失，封单组记0，上限50）':'')+'\n'+lines.join('\n');
+}
+
 function render(){
   // ★ 2026-11-27：原「开盘力度」经验证即昨日实际换手率变体，标签改「昨日换手」，公式替换为昨日实际换手率：
   //   昨日换手% = 昨日成交量(股)/自由流通股本 × 100 = 昨日全天量(手)×100/自由流通股本×100（手→股，自由流通股口径）。
@@ -712,6 +790,7 @@ function render(){
     var pv=r._preFullVol, fs=r.free_shares;
     if(pv>0 && fs>0 && isFinite(pv) && isFinite(fs)) r.kld=Math.round(pv*100/fs*10000)/100;  // 手→股，百分比保留2位
     else r.kld=null;
+    calcFundScore(r);   // ★ 资金评分：所有异步数据在 render 汇聚，此处一次重算6项（与数据到位顺序无关）
   });
   var tbl=document.getElementById('tbl');
   var thead=document.querySelector('#tbl thead'), tbody=document.querySelector('#tbl tbody');
@@ -750,6 +829,7 @@ function render(){
         td.innerHTML='<span class="name-link" onclick="gotoTdx(\''+r.code+'\')">'+r.name+'</span>';
       } else {
         td.textContent=val;
+        if(c.k==='fundScore') td.title=fundTip(r);   // 悬停显示6项明细/达标状态
       }
       tr.appendChild(td);
     });
@@ -774,7 +854,7 @@ function addManualCodes(raw){
   var added=[];
   list.forEach(function(c){
     if(ROWS.some(function(r){return r.code===c;})) return;   // 去重
-    var r={code:c, name:'…', price:null, zf:null, change_pct:null, hs:null, lb:null, zb:null, bl:null, kld:null,
+    var r={code:c, name:'…', price:null, zf:null, change_pct:null, hs:null, lb:null, zb:null, bl:null, kld:null, seal_amt:null,
            r0_in:null,r0_out:null,r1_in:null,r1_out:null,r2_in:null,r2_out:null,r3_in:null,r3_out:null,
            main_in:null, amount_wan:null, main_pct:null, turnover_pct:null, vol_ratio:null, manual:true};
     ROWS.push(r); curRows.push(r); added.push(r);
@@ -790,7 +870,7 @@ function addManualCodes(raw){
 function enrichManualWithEM(rows){
   if(!rows||!rows.length) return;
   var di=EM_DATE||fmtDateLocal(new Date());
-  var kw='代码含'+rows.map(function(r){return r.code;}).join('或')+'，开盘涨幅，开盘换手Z，开盘量比，自由流通股本';
+  var kw='代码含'+rows.map(function(r){return r.code;}).join('或')+'，开盘涨幅，开盘换手Z，开盘量比，自由流通股本，封单金额';
   // 标记为本链路：禁止腾讯全天换手率/量比冒充 hs/lb；未匹配到东财的行 5 列留「—」（数据不足）
   rows.forEach(function(r){ r.src='em'; r.emManual=true; });
   var body=JSON.stringify({keyWord:kw, pageSize:1000, pageNo:1, fingerprint:EM_FP, date:di});
@@ -820,6 +900,7 @@ function mergeEMIntoManual(d,rows){
     if(a.hs!=null) r.hs=a.hs;
     if(a.lb!=null) r.lb=a.lb;
     r.free_shares=(a.free_shares!=null?a.free_shares:null);
+    if(a.seal_amt!=null) r.seal_amt=a.seal_amt;   // ★ 封单额供资金评分
   });
   wqStatus('手动代码东财补数 '+n+' 只（开盘换手Z=自由流通股口径，开盘量比=源站真值）');
   fetchManual(rows);   // 腾讯行情+新浪资金流+day/query(zb/bl/hs 重算)
@@ -960,7 +1041,7 @@ var WQ_KEY='jjyl_wencai_queries';
 // 问财免token选股接口（浏览器直连，与 wcc.js 直拉模式一致，无服务器代理）
 var WENCAI_URL = "https://vis.10jqka.com.cn/clxg/default/insideapi/stockpick";
 // 竞价字段附加（与 auction.html / fetch_em_auction3 同口径：zb=竞价金额/昨日成交额×100；bl=今竞/昨竞）
-var AUCTION_FIELDS = "竞价涨幅，竞价量比，分时开盘价，竞价实际换手率，竞价金额，昨日成交额，今日竞价金额/昨日竞价金额大于0，竞价特大单净额";
+var AUCTION_FIELDS = "竞价涨幅，竞价量比，分时开盘价，竞价实际换手率，竞价金额，昨日成交额，今日竞价金额/昨日竞价金额大于0，竞价特大单净额，封单金额";
 
 // 解析问财原始 JSON → [{code,name,vals}]
 function parseWencaiRaw(d){
@@ -1024,8 +1105,10 @@ function parseAuction(vals){
   var zb = (jjje!=null && zje) ? Math.round(jjje/zje*100*10)/10 : null;
   var bl = wcMatch(vals, function(k){ return k.indexOf('竞价金额/昨日竞价金额')>=0 || (k.indexOf('{(}')>=0 && k.indexOf('竞价金额')>=0); });
   if(bl===null && zjj!=null && jjje!=null){ try{ bl = Math.round(jjje/zjj*10)/10; }catch(e){ bl=null; } }
+  // ★ 封单额：问财返回「涨停封单额」纯数字元，供资金评分封单组
+  var sealAmt = wcMatch(vals, function(k){ return k.indexOf('封单额')>=0 || k.indexOf('封单金额')>=0; });
   return {lb: lb!=null?Math.round(lb*100)/100:null, hs: hs!=null?Math.round(hs*100)/100:null,
-          zb: zb, bl: bl!=null?Math.round(bl*10)/10:null};
+          zb: zb, bl: bl!=null?Math.round(bl*10)/10:null, seal_amt:sealAmt};
 }
 // 新浪资金流：浏览器直连 jsonp_v2.php（与「涨停接力-2.1.xls」同源），返回 r0~r3 入/出（元）
 function sinaFlowJsonp(codes, onDone){
@@ -1081,7 +1164,7 @@ function applyWencaiRows(base, wf, tag){
   base.forEach(function(b){
     if(ROWS.some(function(r){return r.code===b.code;})) return;
     var a = parseAuction(amap[b.code]||{});
-    var r={code:b.code, name:b.name||'…', price:null, zf:null, change_pct:null, hs:null, lb:null, zb:null, bl:null, kld:null,
+    var r={code:b.code, name:b.name||'…', price:null, zf:null, change_pct:null, hs:null, lb:null, zb:null, bl:null, kld:null, seal_amt:(a.seal_amt!=null?a.seal_amt:null),
            r0_in:null,r0_out:null,r1_in:null,r1_out:null,r2_in:null,r2_out:null,r3_in:null,r3_out:null,
            main_in:null, amount_wan:null, main_pct:null, turnover_pct:null, vol_ratio:null, manual:true};
     // 开盘涨幅% 不采用问财"竞价涨幅"（问财盘后返回历史旧值，非今日真实开盘），统一由腾讯 (今开-昨收)/昨收 实时计算
@@ -1102,16 +1185,20 @@ function applyWencaiRows(base, wf, tag){
 function enrichWencaiFreeShares(rows){
   if(!rows||!rows.length) return;
   var di=fmtDateLocal(new Date());
-  var kw='代码含'+rows.map(function(r){return r.code;}).join('或')+'，自由流通股本';
+  var kw='代码含'+rows.map(function(r){return r.code;}).join('或')+'，自由流通股本，封单金额';
   function fillFree(d){
     if(!d||d.code!=='100'||!d.data||!d.data.result||!d.data.result.dataList||!d.data.result.dataList.length) return;
-    var cols=d.data.result.columns||[], dl=d.data.result.dataList||{}, map={};
+    var cols=d.data.result.columns||[], dl=d.data.result.dataList||{}, map={}, sealMap={};
     dl.forEach(function(row){
       var c=String(row.SECURITY_CODE||'').split('.')[0];
       if(!/^\d{6}$/.test(c)) return;
-      for(var i=0;i<cols.length;i++){ var t=String(cols[i].title||''); if(t.indexOf('自由流通股本')>=0){ var v=parseAmtShares(row[cols[i].key]); if(v>0) map[c]=v; break; } }
+      for(var i=0;i<cols.length;i++){
+        var t=String(cols[i].title||'');
+        if(t.indexOf('自由流通股本')>=0){ var v=parseAmtShares(row[cols[i].key]); if(v>0) map[c]=v; }
+        if(t.indexOf('封单额')>=0||t.indexOf('封单金额')>=0){ var sv=parseAmtYuan(row[cols[i].key]); if(sv!=null) sealMap[c]=sv; }
+      }
     });
-    rows.forEach(function(r){ if(map[r.code]>0){ r.free_shares=map[r.code]; calcNld(r); } });
+    rows.forEach(function(r){ if(map[r.code]>0) r.free_shares=map[r.code]; if(r.seal_amt==null && sealMap[r.code]!=null) r.seal_amt=sealMap[r.code]; calcNld(r); });
     render();
   }
   var body=JSON.stringify({keyWord:kw, pageSize:1000, pageNo:1, fingerprint:EM_FP, date:di});
