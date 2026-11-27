@@ -118,6 +118,9 @@ tbody tr:nth-child(even) td.stk,tbody tr:nth-child(even) td.nm{background:var(--
 .wencaibar button.ghost{background:var(--bg-card);color:var(--text)}
 .wencaibar button:active{transform:scale(.96)}
 .wencaibar .status{width:100%;font-size:11px;color:var(--muted);line-height:1.5;min-height:14px}
+/* ★ 2026-11-28 首板复核开关（问财多条件同句把「首板」放宽为「今日涨停」→ 多出非首板票，用东财首板集合白名单复核） */
+.wencaibar .fbcheck{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);white-space:nowrap;cursor:pointer;padding:6px 8px;border:1px solid var(--border-strong);border-radius:8px;background:var(--bg-card)}
+.wencaibar .fbcheck input{accent-color:var(--accent);cursor:pointer;margin:0}
 </style>
 </head>
 <body>
@@ -139,6 +142,7 @@ tbody tr:nth-child(even) td.stk,tbody tr:nth-child(even) td.nm{background:var(--
   <button class="ghost" onclick="delQuery()" title="删除选中的已保存问句">&#128465; 删除</button>
   <textarea id="wencaiInput" placeholder="输入问财问句，如：涨停，去除st，去除北交所&#10;竞价公式：主板或创业板，非ST，非新股，竞价涨幅3到8，竞价量比大于9.7，竞价实际换手率大于0.09%，竞价金额/昨日成交额大于3%，竞价金额/昨日竞价金额大于3"></textarea>
   <button onclick="runPick()">&#128269; 选股</button>
+  <label class="fbcheck" title="问财问句含「首板」时生效：用东财「首板」集合做白名单，剔除问财长句放宽混入的非首板票（如超跌反弹票）。东财取数失败则保留全部结果，不误伤。"><input type="checkbox" id="fbCheck" checked onchange="onFbCheckChange()">首板复核</label>
   <button class="ghost" onclick="saveQuery()">&#128190; 保存问句</button>
   <button class="ghost" onclick="exportCodes()">&#8595; 导出代码</button>
   <div class="status" id="wencaiStatus">输入问财问句后点【选股】→ 自动填充 23 列（行情/资金流实时刷新）；也可直接在下方手动添加代码。</div>
@@ -1197,7 +1201,51 @@ function applySinaFlow(data, rows){
     if(ri<rows.length){ assignFlow(rows[ri], arr[di]); rowUsed[ri]=true; ri++; }
   }
 }
-function wqStatus(s){ var el=document.getElementById('wencaiStatus'); if(el) el.textContent=s||''; }
+var FB_MSG_LOCK = 0;   // 首板复核结果提示时间戳：3 秒内不允许普通补数提示覆盖它
+function wqStatus(s){
+  var el=document.getElementById('wencaiStatus'); if(!el) return;
+  // 首板复核提示是最终结果，优先展示；补数中间提示在锁定期内不覆盖它（但仍允许复核提示自身/错误提示覆盖）
+  if(FB_MSG_LOCK && Date.now()-FB_MSG_LOCK<3000 && s.indexOf('首板复核')<0 && s.indexOf('失败')<0 && s.indexOf('不可用')<0) return;
+  el.textContent=s||'';
+}
+
+// ===== ★ 2026-11-28 首板复核（问财多出非首板票修正）=====
+// 根因（实测）：问财长组合问句把「首板」放宽成「今日涨停」——把"收盘价=涨停价但未封板"的票算进来。
+//   东财/问达同句出 139 只（逐只一致，均有涨停封单额），问财 148 只 = 139 + 9 只无封单额（未封板）票。
+// 判据：复用已有的东财「封单金额」问句结果——有封单额=真封板，无封单额=收盘=涨停价但未封板。零额外请求、零自定阈值。
+// 范围：仅问财通道 + 问句含「首板」时生效；东财/问达/一字/手动入口不动。
+// 安全：①东财未返回任何封单额（接口异常/当日无涨停）→ 保留全部不剔除，避免误伤；②关闭开关即恢复全量。
+var FB_CHECK_ON = (function(){ try{ var v=localStorage.getItem('jjyl_fb_check'); return v===null?true:v==='1'; }catch(e){ return true; } })();
+var LAST_WC_Q = '';        // 当前问财通道问句（供开关切换/复核判定）
+var LAST_SEAL_MAP = null;  // 本轮东财封单额补数结果 {code: parseEastmoney结果}，作为首板白名单
+
+function fbQueryHasFirstBoard(){ var q=LAST_WC_Q||''; return /首板/.test(q) && !/非首板/.test(q); }
+function fbIsWencaiChannel(){ return CUR_SRC==='wencai' || isPresetSrc(CUR_SRC); }
+
+function onFbCheckChange(){
+  var el=document.getElementById('fbCheck');
+  FB_CHECK_ON = !!(el && el.checked);
+  try{ localStorage.setItem('jjyl_fb_check', FB_CHECK_ON?'1':'0'); }catch(e){}
+  if(!fbIsWencaiChannel()) return;   // 非问财通道不复核，避免误改东财/问达结果
+  if(FB_CHECK_ON) applyFirstBoardFilter();
+  else { curRows=ROWS.slice(); render(); wqStatus('首板复核已关闭，恢复问财全部 '+curRows.length+' 只'); }
+}
+
+// 用封单额 map 过滤：只改 curRows（展示/导出），ROWS 保留全量供开关恢复
+function applyFirstBoardFilter(){
+  if(!FB_CHECK_ON || !fbQueryHasFirstBoard() || !fbIsWencaiChannel()) return;
+  var map=LAST_SEAL_MAP;
+  // 安全闸门：东财一个封单额都没返回（接口异常，或该问句本就不是涨停票）→ 不剔除
+  if(!map || !Object.keys(map).length){ wqStatus('首板复核：东财未返回涨停封单额（接口不可用或无涨停票），保留问财全部 '+curRows.length+' 只，不做剔除'); return; }
+  var all=ROWS.slice();
+  var kept=all.filter(function(r){ return !!(map[r.code] && map[r.code].seal_amt!=null && map[r.code].seal_amt>0); });
+  var removed=all.length-kept.length;
+  if(removed<=0) return;   // 无需剔除（问财本就与东财一致）
+  curRows=kept; render();
+  FB_MSG_LOCK=Date.now();   // 锁定结果提示 3 秒，避免后到的补数提示覆盖
+  wqStatus('首板复核(东财封单额口径)：问财 '+all.length+' 只 → 剔除 '+removed+' 只「收盘=涨停价但未封板」票 → 显示 '+kept.length+' 只');
+}
+
 // 问财结果 → 23 列行（base=代码集/名称，wf=带竞价字段的结果；tag=状态栏后缀说明）
 function applyWencaiRows(base, wf, tag){
   var amap = {}; (wf||[]).forEach(function(x){ if(x&&x.code) amap[x.code]=x.vals; });
@@ -1243,12 +1291,15 @@ function enrichWencaiFreeShares(rows){
   if(needSeal.length) emByCode(needSeal,'封单金额',function(map){
     var n=0;
     needSeal.forEach(function(r){ var a=map[r.code]; if(a && a.seal_amt!=null){ r.seal_amt=a.seal_amt; n++; } });
+    LAST_SEAL_MAP=map;   // ★ 保存封单额结果作为首板复核白名单
     if(n){ wqStatus('问财 '+n+' 只已由东财补齐涨停封单额（资金评分封单组可算）'); render(); }
+    applyFirstBoardFilter();   // ★ 首板复核：剔除「收盘=涨停价但未封板」票（仅问财+含首板+开关开）
   });
 }
 function runWencai(){
   var q=(document.getElementById('wencaiInput').value||'').trim();
   if(!q){ alert('请输入问财问句'); return; }
+  LAST_WC_Q=q;   // ★ 供首板复核判定问句是否含「首板」
   wqStatus('问财选股中…');
   // 浏览器直连问财（无服务器代理）：①纯问句取代码集/名称；②叠加竞价字段取 zb/bl/lb/hs
   Promise.all([wencaiPick(q,false), wencaiPick(q,true)])
@@ -1264,6 +1315,7 @@ function runWencai(){
 var CUR_SPLIT_TAG = '';
 function runWencaiSplit(queries){
   CUR_SPLIT_TAG = '（'+queries.length+'句交集）';
+  LAST_WC_Q=(queries||[]).join('，');   // ★ 供首板复核判定（预置源问句）
   wqStatus('问财选股中（拆分'+queries.length+'句取交集）…');
   Promise.all(queries.map(function(q){ return wencaiPick(q,false); }))
     .then(function(lists){
@@ -1333,6 +1385,8 @@ function exportCodes(){
 function toggleTheme(){ var b=document.body; b.classList.toggle('dark');
   try{ localStorage.setItem('jjyl-theme', b.classList.contains('dark')?'dark':'light'); }catch(e){} }
 (function(){ try{ if(localStorage.getItem('jjyl-theme')==='dark') document.body.classList.add('dark'); }catch(e){} })();
+// ★ 首板复核开关：初始化 checkbox 与持久化值一致
+(function(){ var el=document.getElementById('fbCheck'); if(el) el.checked=FB_CHECK_ON; })();
 
 
 // ===== 盘中实时刷新（仅交易日盘中；腾讯行情+新浪资金流均浏览器直连，无服务器代理；开盘5指标保持09:26快照） =====
