@@ -559,7 +559,10 @@ function runWenda(q){
   var wdEp=(WENDA_ENDPOINT && /^https:/.test(WENDA_ENDPOINT)) ? WENDA_ENDPOINT : ((location.protocol==='https:' && WENDA_FC_ENDPOINT) ? WENDA_FC_ENDPOINT : (WENDA_ENDPOINT||(API_BASE+'/pq/wenda')));
   wqStatus('问达选股中（问句已追加开盘换手Z/开盘量比，callTQL 经后端代理）…');
   var cb='jjyl_wd_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
-  var url=wdEp+'?message='+encodeURIComponent(q);
+  // ★ 2026-11-28 解除问达「一次只显示 50 只」限制：FC 代理默认 count=50，实测支持 count 参数、
+  //   硬上限 200（count>200 仍只回 200，且 page/offset 等翻页参数无效）。设 count=200 取满上限。
+  //   已验证 count 与 JSONP 回调 cb 共存正常（返回 jjyl_xxx({...list:200条})）。
+  var url=wdEp+'?message='+encodeURIComponent(q)+'&count=200';
   var done=false;
   // https 页面 + 后端仍是 http → 浏览器会按混合内容直接拦截，请求根本发不出去，
   //   且 script 标签被拦不会触发 onerror，只能干等 15s。这里提前判定并即时兜底。
