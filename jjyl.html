@@ -125,7 +125,7 @@ tbody tr:nth-child(even) td.stk,tbody tr:nth-child(even) td.nm{background:var(--
     <div class="live off" id="live"><span class="dot"></span><span id="liveTxt">盘后快照（开盘5指标为09:26竞价数据）</span></div>
   </div>
   <div class="btns">
-    <select id="srcSel" class="head-ctl" onchange="onSrcChange()" title="数据源"><option value="wencai" selected>问财</option><option value="em">东财</option><option value="wenda">问达</option><option value="yizhi">一字</option><option value="zhuban">主板</option><option value="chuangban">创板</option></select>
+    <select id="srcSel" class="head-ctl" onchange="onSrcChange()" title="数据源"><option value="wencai" selected>问财</option><option value="em">东财</option><option value="wenda">问达</option><option value="yizhi">一字</option><option value="shouban">首板</option><option value="zhuban">主板</option><option value="chuangban">创板</option></select>
     <button class="btn-icon em-date-btn" id="emDateBtn" style="display:none" title="东财选股日期（按问句回测所选日期，非今日即历史回测）" onclick="openEmDatePicker()">&#128197; <span id="emDateTxt">今日</span></button>
     <button class="btn-icon" onclick="location.reload()" title="刷新数据">&#128260;</button>
     <button class="btn-icon" onclick="exportToTdx()" title="加入通达信自定义板块">&#128226;</button>
@@ -138,6 +138,7 @@ tbody tr:nth-child(even) td.stk,tbody tr:nth-child(even) td.nm{background:var(--
   <button onclick="runPick()">&#128269; 选股</button>
   <button class="ghost" onclick="saveQuery()">&#128190; 保存问句</button>
   <button class="ghost" onclick="exportCodes()">&#8595; 导出代码</button>
+  <button id="pushFeishu">&#128233; 推送飞书</button>
   <div class="status" id="wencaiStatus">输入问财问句后点【选股】→ 自动填充 23 列（行情/资金流实时刷新）；也可直接在下方手动添加代码。</div>
 </div>
 <div class="addbar">
@@ -173,8 +174,8 @@ var API_BASE  = (location.hostname==='111.231.79.7') ? '' : 'http://111.231.79.7
 var YZ_ENDPOINT = 'https://stock-screen-efvfnufnrv.cn-hangzhou.fcapp.run/yz?pz=200';  // 一字选股：阿里云 FC https 后端（同上函数，/yz 路由，原样转发东财 push2dycalc）
 var YZ_DIRECT   = 'https://push2dycalc.eastmoney.com/api/qt/clist/get?fs=m:1+t:2,m:0+t:6,m:0+t:80,m:1+t:23&fltt=2&invt=2&fields=f2,f3,f4,f5,f6,f8,f10,f12,f14,f15,f17,f18,f19,f20,f21,f615,f630,f100,f102,f103,f127&fid=f3&po=1&pn=1&pz=200&np=1&ut=c92c50e6b0fab2c17cd5e276e9a79c42';  // 降级用：原版直连东财（该域名放 ACAO 回写，可作兜底）
 var EM_ENDPOINT = 'https://stock-screen-efvfnufnrv.cn-hangzhou.fcapp.run/em';  // 东财：阿里云 FC https 后端（同上函数，/em 路由）
-var WENDA_FC_ENDPOINT = 'https://stock-screen-efvfnufnrv.cn-hangzhou.fcapp.run/wenda';  // 问达：阿里云 FC https 后端（https 页面兜底，旧归一化未透传 hs）
-var WENDA_ENDPOINT = 'https://111.231.79.7/pq/wenda';  // 问达：自有代理 https（2026-11-22 已透传源站 hs+free_shares；https 页面也可用，避免回退 FC 丢自由流通股）
+var WENDA_FC_ENDPOINT = 'https://stock-screen-efvfnufnrv.cn-hangzhou.fcapp.run/wenda';  // 问达：阿里云 FC https 后端（2026-11-27 按用户要求恢复为主通道）
+var WENDA_ENDPOINT = WENDA_FC_ENDPOINT;  // 问达主通道=阿里云 FC（2026-11-27 恢复）；自有代理备份 https://111.231.79.7/pq/wenda（返回 hs/free_shares 完整，FC 缺字段由 enrichWendaFieldsViaEM 补）
 var WENCAI_ENDPOINT = '';  // 问财：留空可用直连（已实测 CORS 全开，无需后端）
 var API_BASE_HTTPS  = 'https://txy.seamining.top';  // 其余通道(东财/AI)：服务器 https 地址（2026-10-09 已配 Let's Encrypt 证书）
 if (API_BASE_HTTPS) API_BASE = API_BASE_HTTPS;
@@ -194,26 +195,31 @@ var EM_DATE = fmtDateLocal(new Date());   // 东财回测所选日期（自建�
 // ===== 预置问句数据源（问财通道，切源即自动填入问句，可再编辑） =====
 // ⚠️ 问财四个已知限制（2026-10-13 夜间实测，接口本身正常——"涨停"可回 70 只）：
 //   ① 单句不能同时出现两个复合比值（"竞价金额/昨日成交额" 与 "竞价金额/昨日竞价金额" 同句 → 解析失败返回 0）
-//      ⇒ 原「首板」源已下线；创板同样用 PRESET_SPLIT 拆两句取交集（数学等价）。
+//      ⇒ 首板拆成 PRESET_SPLIT 两句分别查询后取交集，语义与原句一致（两个比值都满足）；
 //   ② "昨日涨幅" 与其它条件同句会整体失效（单独可用，组合恒 0；"昨日涨跌幅" 无此问题）
-//      ⇒ 「昨日涨幅」须改写为「昨日涨跌幅」才可与其它条件同句（保留此条备查）。
+//      ⇒ 首板原句的「昨日涨幅<3%」按同义改写为「昨日涨跌幅<3%」；
 //   ③ 乘法必须写 x 不能写 *（* 会被当通配符导致整句失效）；
 //   ④ **复杂公式（带除法）整句会被忽略**——"A x B / C x D >= 1" 单独查竟返回 5561 只（≈全市场，条件形同虚设）；
 //      正确写法是**保留括号原样**："(A*B)/(C*D)>=1"（问财能正确解析，实测 3 只）；
 //      ⚠️ 不要擅自改写成"两边相乘比较"（A x B >= C x D）——虽也能生效但结果更宽松（11 只 ≠ 3 只），语义已失真；
 //      且该公式与其它条件同句仍会整句失效 ⇒ 创板同样拆两句取交集（(A*B)/(C*D)>=1 与原式数学等价）。
 var PRESET_Q = {
+  shouban:   '主板，非ST，非退市，非新股，竞价涨幅3%~9%，竞价量比>5，竞价金额/昨日成交额>5%，竞价金额/昨日竞价金额>1，昨日涨跌幅<3%，昨日竞价涨幅<3%',
   zhuban:    '主板，非ST，非退市，非新股，竞价涨幅2%~8%，竞价金额>1000万，竞价量>150万，竞价实际换手率>0.9，竞价量比>9，竞价金额/昨日成交额5%~25%',
-  chuangban: '昨日非涨停,创业板,非ST,竞价抢筹,前30天有大于4%的阳线,昨日收盘价/昨日10日线<1.11,(今日竞价量*今日竞价涨跌幅)/(前5个交易日平均成交量*昨日实际换手率)>=1'
+  chuangban: '昨日非涨停,创业板,非ST,竞价抢筹,前30天有大于4%的阳线,昨日收盘价/昨日10日线<1.11,今日竞价量*今日竞价涨跌幅/前5个交易日平均成交量*昨日实际换手率>=1'
 };
 // 需要「拆句取交集」执行的源（输入框仍显示 PRESET_Q 原句，便于阅读理解）
 var PRESET_SPLIT = {
+  shouban: [
+    '主板，非ST，非退市，非新股，竞价涨幅3%~9%，竞价量比>5，竞价金额/昨日成交额>5%，昨日涨跌幅<3%，昨日竞价涨幅<3%',
+    '主板，非ST，非退市，非新股，竞价涨幅3%~9%，竞价量比>5，竞价金额/昨日竞价金额>1，昨日涨跌幅<3%，昨日竞价涨幅<3%'
+  ],
   chuangban: [
     '昨日非涨停,创业板,非ST,竞价抢筹,前30天有大于4%的阳线,昨日收盘价/昨日10日线<1.11',
-    '(今日竞价量*今日竞价涨跌幅)/(前5个交易日平均成交量*昨日实际换手率)>=1'
+    '今日竞价量*今日竞价涨跌幅/前5个交易日平均成交量*昨日实际换手率>=1'
   ]
 };
-function isPresetSrc(s){ return s==='zhuban' || s==='chuangban'; }
+function isPresetSrc(s){ return s==='shouban' || s==='zhuban' || s==='chuangban'; }
 function onSrcChange(){
   CUR_SRC = document.getElementById('srcSel').value;
   // 日期键仅东财需要（按问句回测任意日期）；其余源一律隐藏
@@ -230,7 +236,7 @@ function onSrcChange(){
     // 切换到时，清空输入框
     ta.value = '';
   } else if(isPresetSrc(CUR_SRC)){
-    // 主板/创板：问财通道的预置问句，自动填入（可改），点【选股】即按此问句选股
+    // 首板/主板/创板：问财通道的预置问句，自动填入（可改），点【选股】即按此问句选股
     ta.value = PRESET_Q[CUR_SRC];
     ta.placeholder='【'+document.getElementById('srcSel').selectedOptions[0].text+'】已按问财问句自动填入，可直接点【选股】，也可自行修改';
   } else {
@@ -312,14 +318,14 @@ function jyz_sort_date(){ return null; }
 function runPick(){
   var ta=document.getElementById('wencaiInput');
   var q = (ta.value || '').trim();
-  // 预置源（主板/创板）：输入框被清空时用预置问句兜底，保证一键可用
+  // 预置源（首板/主板/创板）：输入框被清空时用预置问句兜底，保证一键可用
   if(isPresetSrc(CUR_SRC) && !q && PRESET_Q[CUR_SRC]){ q=PRESET_Q[CUR_SRC]; ta.value=q; }
   if(!q && CUR_SRC !== 'yizhi') { alert('请输入问句'); return; }
   
   if(CUR_SRC === 'em') return runEastmoney(q);
   if(CUR_SRC === 'wenda') return runWenda(q);
   if(CUR_SRC === 'yizhi') return runYiZhi();  // 一字不需要问句，直接执行
-  // 创板：问财无法把复杂公式与其它条件放同一句 → 拆两句分别查询取交集
+  // 首板/创板：问财无法把冲突条件放同一句 → 拆两句分别查询取交集
   if(PRESET_SPLIT[CUR_SRC]) return runWencaiSplit(PRESET_SPLIT[CUR_SRC], PRESET_SPLIT[CUR_SRC].length);
   return runWencai();   // 问财 / 主板 都走问财通道
 }
@@ -338,9 +344,9 @@ function runYiZhi(){
       render();
       return;
     }
-    // ★ 2026-11-22：一字选出的代码 → 走东财问句补数，使「开盘换手Z/开盘量比/开盘昨比/竞价昨比/开盘力度」
+    // ★ 2026-11-22：一字选出的代码 → 走东财问句补数，使「开盘换手Z/开盘量比/开盘昨比/竞价昨比/昨日换手」
     //   5 列的数据源及算法与「东财问句」完全一致：
-    //   hs=东财源站自由流通股口径重算、lb=东财源站集合竞价量比、zb/bl=腾讯day/query、kld=hs/zb×10。
+    //   hs=东财源站自由流通股口径重算、lb=东财源站集合竞价量比、zb/bl=腾讯day/query、kld=昨日实际换手率(昨日量×100/自由流通股×100)。
     //   实测东财问句「代码含A或B...(84只)」可一次返回全部所需列，筛选集合不变。
     var codes=[];
     stocks.forEach(function(s){ if(/^\d{6}$/.test(s.code) && codes.indexOf(s.code)<0) codes.push(s.code); });
@@ -455,7 +461,7 @@ function runEastmoney(q){
   var today = fmtDateLocal(new Date());
   wqStatus((di===today ? '东财选股（今日实时·直连）' : '东财历史回测 '+di+'（直连）')+' 选股中…');
   var kw = (di===today) ? q : (di+';'+q);   // 非今日：参考页写法，日期拼到问句前（东财据此回测历史）
-  // ★ 东财只返回问句中出现的字段列：若问句未含「开盘涨幅/开盘换手Z/开盘量比」，对应列不返回 → 页面开盘涨幅%/开盘换手Z/开盘量比/开盘力度空白。
+  // ★ 东财只返回问句中出现的字段列：若问句未含「开盘涨幅/开盘换手Z/开盘量比」，对应列不返回 → 页面开盘涨幅%/开盘换手Z/开盘量比/昨日换手空白。
   //   实测：问句末尾追加纯字段名「开盘涨幅，开盘换手Z，开盘量比」(无阈值) 可让东财补出集合竞价涨跌幅/换手率/量比列，且不改变筛选结果(rows数不变)。
   (function(){
     var extras=[];
@@ -523,10 +529,10 @@ function parseAmtShares(v){
   if(s.indexOf('万')>=0) return Math.round(n*1e4);
   return Math.round(n);
 }
-// ===== 问达选股（通达信私有 callTQL；经阿里云 FC https 后端代理，支持盘中资金流刷新） =====
-// 问达会话机制（固定 ASPSessionID + 空RI首调）无法在浏览器直连完成，必须走 https 后端代理（阿里云 FC stock-screen）；
+// ===== 问达选股（通达信私有 callTQL；经 https 后端代理，支持盘中资金流刷新） =====
+// 问达会话机制（固定 ASPSessionID + 空RI首调）无法在浏览器直连完成，必须走 https 后端代理；
 // 代理把归一化 JSON 回传，此处落表并由 fetchManual 补全实时行情 + 新浪资金流（盯盘生效）。
-// 若服务器宕机/代理不可达（jsonp 返回 null 或 __error__），回退跳窗到问达源网页，保证“至少能查”。
+// ★ 2026-11-27：彻底取消跳窗兜底。代理不可达/超时/出票为零均只在页面内提示「出票为零，或语句不适合问达选股」，绝不打开问达源站。
 function runWenda(q){
   // ★ 2026-11-22：照搬东财解法——问句末尾预加纯字段名（不带阈值，不改变筛选结果）。
   //   实测问达源站 TQL 会因此多返回「开盘自由换手率(%)」「竞价量」「自由流通股本」三列；
@@ -537,8 +543,9 @@ function runWenda(q){
     if(!/开盘量比/.test(q)) extras.push('开盘量比');
     if(extras.length) q += '，'+extras.join('，');
   })();
-  // ★ 2026-11-22：WENDA_ENDPOINT 已是 https，file/http/https 页面统一走自有代理（透传 hs+free_shares）。
-  //   FC 旧后端不返回自由流通股 ⇒ 开盘换手Z 会退化为流通股本口径（错误），仅当自有代理未配置时才兜底。
+  // ★ 2026-11-27：按用户要求恢复阿里云 FC 为问达主通道（WENDA_ENDPOINT 已指向 FC）。
+  //   FC 旧归一化不返回 hs/free_shares（实测）⇒ 由 applyWenda 内 enrichWendaFieldsViaEM 用东财问句补齐，
+  //   保证「开盘换手Z」「昨日换手」仍有数据；自有代理 https://111.231.79.7/pq/wenda 仅作备份地址。
   var wdEp=(WENDA_ENDPOINT && /^https:/.test(WENDA_ENDPOINT)) ? WENDA_ENDPOINT : ((location.protocol==='https:' && WENDA_FC_ENDPOINT) ? WENDA_FC_ENDPOINT : (WENDA_ENDPOINT||(API_BASE+'/pq/wenda')));
   wqStatus('问达选股中（问句已追加开盘换手Z/开盘量比，callTQL 经后端代理）…');
   var cb='jjyl_wd_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
@@ -547,31 +554,69 @@ function runWenda(q){
   // https 页面 + 后端仍是 http → 浏览器会按混合内容直接拦截，请求根本发不出去，
   //   且 script 标签被拦不会触发 onerror，只能干等 15s。这里提前判定并即时兜底。
   if(!WENDA_ENDPOINT && /^http:/.test(API_BASE) && location.protocol==='https:'){
-    wqStatus('问达不可用：页面为 https，但后端仍是 http（混合内容被浏览器拦截）。请在文件顶部填写 WENDA_ENDPOINT（https 地址）。');
-    try{ window.open('https://wenda.tdx.com.cn/site/wenda/stock_index.html?message='+encodeURIComponent(q)+'&queryType=SY','_blank'); }catch(e){}
+    ROWS=[]; curRows=[];
+    wqStatus('问达出票为零（页面为 https 但后端仍是 http，混合内容被拦截；或该语句不适合问达选股）；未跳转外部网站');
+    render();
     return;
   }
-  // 服务器不可用时的兜底：跳窗到问达官网同源页面（源网页可独立查）
-  var fallbackToSource=function(){
+  // ★ 2026-11-27：代理不可达/超时 → 页面内提示「出票为零」，彻底不跳窗、不打开问达源站。
+  var reportWendaZero=function(msg){
     if(done) return; done=true;
-    var srcUrl='https://wenda.tdx.com.cn/site/wenda/stock_index.html?message='+encodeURIComponent(q)+'&queryType=SY';
-    wqStatus('问达服务器代理不可用（可能服务器宕机），已在新标签页打开问达官网，请在通达信环境查看结果');
-    try{ window.open(srcUrl,'_blank'); }catch(e){}
+    ROWS=[]; curRows=[];   // 清空旧结果，避免误以为仍出票
+    wqStatus(msg);
+    render();
   };
   jsonp(url, cb, function(d){
     if(done) return;                 // 已兜底（超时/其他路径）
-    if(d && !d.__error__){           // 代理正常返回（含合法空结果，由 applyWenda 提示“无结果”）
+    if(d && !d.__error__){           // 代理正常返回（含合法空结果，由 applyWenda 提示“出票为零”）
       done=true; applyWenda(d);
-    } else {                         // 代理失败/宕机 → 跳窗溯源
-      fallbackToSource();
+    } else {                         // 代理失败/宕机 → 页面内提示，不跳窗
+      reportWendaZero('问达出票为零（代理未返回有效结果，或该语句不适合问达选股）；未跳转外部网站');
     }
   });
-  // 防服务器挂起无响应（连接通但不返回，onerror 不触发）：15s 后兜底跳窗
-  setTimeout(fallbackToSource, 15000);
+  // 防服务器挂起无响应（连接通但不返回，onerror 不触发）：15s 后页面内提示，不跳窗
+  setTimeout(function(){ reportWendaZero('问达出票为零（代理超时无响应，或该语句不适合问达选股）；未跳转外部网站'); }, 15000);
+}
+// ★ 2026-11-27 恢复阿里云 FC 主通道配套：FC 归一化不返回 hs/free_shares（实测），
+//   若直接用它则「开盘换手Z」「昨日换手」都会显示「—」。这里用东财问句按代码补齐这两项
+//   （自由流通股口径），不改问达源的 code/name/price/lb；自有代理返回完整字段时自动跳过。
+function enrichWendaFieldsViaEM(rows){
+  var need=(rows||[]).filter(function(r){ return r && (r.hs==null || r.free_shares==null); });
+  if(!need.length) return;
+  var di=fmtDateLocal(new Date());
+  var kw='代码含'+need.map(function(r){return r.code;}).join('或')+'，开盘涨幅，开盘换手Z，开盘量比，自由流通股本';
+  function merge(d){
+    if(!d||d.code!=='100'||!d.data||!d.data.result||!d.data.result.dataList||!d.data.result.dataList.length) return;
+    var cols=d.data.result.columns||[], map={};
+    d.data.result.dataList.forEach(function(row){
+      var c=String(row.SECURITY_CODE||'').split('.')[0];
+      if(/^\d{6}$/.test(c)) map[c]=parseEastmoney(cols,row);
+    });
+    var n=0;
+    need.forEach(function(r){
+      var a=map[r.code]; if(!a) return;
+      if(r.hs==null && a.hs!=null) r.hs=a.hs;
+      if(r.free_shares==null && a.free_shares!=null) r.free_shares=a.free_shares;
+      if(r.lb==null && a.lb!=null) r.lb=a.lb;
+      if(r.zf==null && a.zf!=null) r.zf=a.zf;
+      n++;
+    });
+    if(n){ wqStatus('问达 '+n+' 只已由东财问句补齐开盘换手Z/自由流通股本（昨日换手可算）'); render(); }
+  }
+  var body=JSON.stringify({keyWord:kw,pageSize:1000,pageNo:1,fingerprint:EM_FP,date:di});
+  fetch(EM_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:body})
+    .then(function(r){return r.json();})
+    .then(function(d){ if(d&&d.code==='100'&&d.data&&d.data.result&&d.data.result.dataList&&d.data.result.dataList.length) merge(d); else viaServer(); })
+    .catch(function(){ viaServer(); });
+  function viaServer(){
+    var cb='jjyl_wdem_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
+    var url=(EM_ENDPOINT||(API_BASE+'/pq/em'))+'?keyWord='+encodeURIComponent(kw)+'&date='+encodeURIComponent(di)+'&fp='+EM_FP;
+    jsonp(url,cb,function(d){ merge(d); });
+  }
 }
 function applyWenda(d){
-  if(!d || d.__error__){ wqStatus('问达请求失败：'+(d&&d.__error__||'网络错误')); render(); return; }
-  if(!d.list || !d.list.length){ wqStatus('问达无结果（该问句当日无匹配，或接口暂不可用）'); render(); return; }
+  if(!d || d.__error__){ ROWS=[]; curRows=[]; wqStatus('问达出票为零（请求失败：'+(d&&d.__error__||'网络错误')+'，或该语句不适合问达选股）'); render(); return; }
+  if(!d.list || !d.list.length){ ROWS=[]; curRows=[]; wqStatus('问达出票为零（该问句无匹配，或语句不适合问达选股）'); render(); return; }
   ROWS=[]; curRows=[]; var added=[];
   d.list.forEach(function(it){
     var code=String(it.code||'').trim();
@@ -589,8 +634,9 @@ function applyWenda(d){
   //   仅当代理未返回 hs（如 https 页面走 FC 旧后端）时，才由 fetchDayQueryBl 用 day/query 补算。
   //   开盘昨比/竞价昨比 始终由 day/query 补算（源站无此两列）。
   META.date=fmtDateLocal(new Date());
-  wqStatus('问达返回 '+added.length+' 只（开盘换手Z取源站真值，昨比字段由腾讯 day/query 补算中…）');
+  wqStatus('问达返回 '+added.length+' 只（开盘换手Z/自由流通股本按需由东财问句补齐，昨比字段由腾讯 day/query 补算中…）');
   fetchManual(added);   // 腾讯实时行情 + 新浪8档资金流（与问财同链路，盯盘刷新生效）
+  enrichWendaFieldsViaEM(added);  // ★ 阿里云 FC 缺 hs/free_shares 时由东财问句补齐（昨日换手依赖）
   render();
 }
 
@@ -605,7 +651,7 @@ var COLS = [
   {k:'lb',           t:'开盘量比',  l:0, ty:'num', c:''},
   {k:'zb',           t:'开盘昨比',  l:0, ty:'num', c:''},
   {k:'bl',           t:'竞价昨比',  l:0, ty:'num', c:''},
-  {k:'kld',          t:'开盘力度',  l:0, ty:'num', c:'', tip:'开盘换手Z/开盘昨比*10'},
+  {k:'kld',          t:'昨日换手',  l:0, ty:'num', c:'', tip:'昨日实际换手率% = 昨日成交量(手)×100/自由流通股本×100（自由流通股口径，数据不足显示「—」）'},
   {k:'r0_in', t:'超大单入(万元)', l:0, ty:'num', c:'in'},
   {k:'r1_in', t:'大单入',        l:0, ty:'num', c:'in'},
   {k:'r2_in', t:'中单入',        l:0, ty:'num', c:'in'},
@@ -663,9 +709,13 @@ function favorable(r){
 function prefix(code){ return (code[0]==='6'||code[0]==='9')?'sh':'sz'; }
 
 function render(){
-  // 派生列：开盘力度 = 开盘换手Z / 开盘昨比 × 10（两者任一缺失或开盘昨比为0 → 显示「—」）
+  // ★ 2026-11-27：原「开盘力度」经验证即昨日实际换手率变体，标签改「昨日换手」，公式替换为昨日实际换手率：
+  //   昨日换手% = 昨日成交量(股)/自由流通股本 × 100 = 昨日全天量(手)×100/自由流通股本×100（手→股，自由流通股口径）。
+  //   昨日全天量 _preFullVol 由腾讯 day/query 缓存（fetchDayQueryBl），自由流通股本由东财问句/问达代理透传；
+  //   任一缺失或为0 → 显示「—」（数据不足，不编造）。
   ROWS.forEach(function(r){
-    if(r.hs!=null && r.zb!=null && r.zb!==0 && isFinite(r.hs) && isFinite(r.zb)) r.kld=r.hs/r.zb*10;
+    var pv=r._preFullVol, fs=r.free_shares;
+    if(pv>0 && fs>0 && isFinite(pv) && isFinite(fs)) r.kld=Math.round(pv*100/fs*10000)/100;  // 手→股，百分比保留2位
     else r.kld=null;
   });
   var tbl=document.getElementById('tbl');
@@ -1092,7 +1142,7 @@ function runWencai(){
     })
     .catch(function(e){ wqStatus('问财请求失败：'+(e&&e.message?e.message:e)); });
 }
-// 创板专用：问财单句放不下复杂公式，拆成多句分别查询后取交集，
+// 首板/创板专用：问财单句放不下冲突条件（两个复合比值 / 复杂公式），拆成多句分别查询后取交集，
 // 语义与原句一致（每个条件都满足）。交集为空时给出可判读的提示，便于区分"今天真无票"与"问句写错"。
 var CUR_SPLIT_TAG = '';
 function runWencaiSplit(queries){
@@ -1284,5 +1334,64 @@ startLive();
     </div>
   </div>
 </div>
+<script>
+/* === 飞书推送：参照 wcxgfs-m.html，no-cors + text/plain 绕过 CORS，直连「擒龙捉妖」群自定义机器人 ===
+   ★ 推送内容仅 4 项：代码 / 名称 / 现价 / 开盘涨幅%（其余列一律不推）
+   ★ 表头可点击换序，故按【列名文本】定位列序号，不依赖固定下标 */
+(function(){
+  var WEBHOOK='https://open.feishu.cn/open-apis/bot/v2/hook/9a1b3e16-073a-46c2-acc2-badd1ced9c71';
+  var btn=document.getElementById('pushFeishu');
+  if(!btn) return;
+  btn.addEventListener('click', function(){
+    var tbody=document.querySelector('#tbl tbody');
+    var thead=document.querySelector('#tbl thead');
+    var rows=tbody?tbody.querySelectorAll('tr'):[];
+    if(!rows.length){ alert('暂无选股结果，请先点【选股】'); return; }
+
+    // ① 建立「列名 → 列序号」映射（表头文字里的 ▲▼⇅ 是排序标记，去掉再比对）
+    //    精确全等匹配，不用 indexOf/contains，避免「现价」误配到「现价(元)」这类相似列名
+    var idxOf={};
+    var thList=thead?thead.querySelectorAll('th'):[];
+    for(var i=0;i<thList.length;i++){
+      var nm=(thList[i].textContent||'').replace(/[▲▼⇅\s]/g,'');
+      if(nm && idxOf[nm]===undefined) idxOf[nm]=i;
+    }
+    var I_code = idxOf['代码'];
+    var I_name = idxOf['名称'];
+    var I_price= idxOf['现价'];
+    var I_zf   = idxOf['开盘涨幅%'];
+    var missing=[];
+    if(I_code===undefined) missing.push('代码');
+    if(I_name===undefined) missing.push('名称');
+    if(I_price===undefined) missing.push('现价');
+    if(I_zf===undefined) missing.push('开盘涨幅%');
+    if(missing.length){ alert('表格缺少列：'+missing.join('、')+'，无法推送'); return; }
+
+    function cell(tr, idx){
+      var td=tr.querySelectorAll('td')[idx];
+      return td? (td.textContent||'').replace(/\s+/g,' ').trim() : '—';
+    }
+
+    // ② 组装消息：仅 4 项
+    var srcSel=document.getElementById('srcSel');
+    var srcTxt=srcSel? (srcSel.selectedOptions[0]?srcSel.selectedOptions[0].text:'') : '';
+    var lines=[];
+    lines.push('【'+(srcTxt||'问财')+'选股 · '+new Date().toLocaleString('zh-CN')+' · '+rows.length+' 只】');
+    lines.push('代码 | 名称 | 现价 | 开盘涨幅%');
+    for(var r=0;r<rows.length;r++){
+      var tr=rows[r];
+      if(tr.querySelector('td')&&(tr.querySelector('td').textContent||'').indexOf('暂无')>=0) continue;
+      lines.push([cell(tr,I_code), cell(tr,I_name), cell(tr,I_price), cell(tr,I_zf)].join(' | '));
+    }
+
+    var text=lines.join('\n');
+    btn.disabled=true; var oldTxt=btn.textContent; btn.textContent='发送中…';
+    fetch(WEBHOOK,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({msg_type:'text',content:{text:text}})})
+      .then(function(){ alert('已发送飞书 ✅（代码/名称/现价/开盘涨幅，共 '+rows.length+' 只）'); })
+      .catch(function(e){ alert('发送失败：'+e.message); })
+      .finally(function(){ btn.disabled=false; btn.textContent=oldTxt; });
+  });
+})();
+</script>
 </body>
 </html>
