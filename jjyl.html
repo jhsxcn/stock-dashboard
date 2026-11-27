@@ -612,33 +612,24 @@ function applyWenda(d){
   enrichWendaFieldsViaEM(added);  // ★ 阿里云 FC 缺 hs/free_shares 时由东财问句补齐（昨日换手依赖）
   render();
 }
-// ★ 2026-11-27 恢复阿里云 FC 主通道配套：FC 归一化不返回 hs/free_shares（实测），
-//   若直接用它则「开盘换手Z」「昨日换手」都会显示「—」。这里用东财问句按代码补齐这两项
-//   （自由流通股口径），不改问达源的 code/name/price/lb；自有代理返回完整字段时自动跳过。
-function enrichWendaFieldsViaEM(rows){
-  var need=(rows||[]).filter(function(r){ return r && (r.hs==null || r.free_shares==null || r.seal_amt==null); });
-  if(!need.length) return;
+// ★ 2026-11-28 关键修正：东财问句「封单金额」会把返回集限制为涨停票（实测 4 只仅回 2 只涨停），
+//   若与「自由流通股本」写在同一句，非涨停票整行不返回 ⇒ 昨日换手/量能力度全部无数据。
+//   因此拆成两条独立问句：①纯基础字段（全票返回）②封单金额（仅涨停票）。
+//   东财按代码补数通用函数：fields=纯字段名串（不含代码前缀），cb(map) 收到 {code: parseEastmoney结果}。
+function emByCode(rows, fields, cb){
+  if(!rows||!rows.length) return;
   var di=fmtDateLocal(new Date());
-  var kw='代码含'+need.map(function(r){return r.code;}).join('或')+'，开盘涨幅，开盘换手Z，开盘量比，自由流通股本，封单金额';
+  var kw='代码含'+rows.map(function(r){return r.code;}).join('或')+'，'+fields;
   function merge(d){
-    if(!d||d.code!=='100'||!d.data||!d.data.result||!d.data.result.dataList||!d.data.result.dataList.length) return;
-    var cols=d.data.result.columns||[], map={};
-    d.data.result.dataList.forEach(function(row){
-      var c=String(row.SECURITY_CODE||'').split('.')[0];
-      if(/^\d{6}$/.test(c)) map[c]=parseEastmoney(cols,row);
-    });
-    var n=0;
-    need.forEach(function(r){
-      var a=map[r.code]; if(!a) return;
-      if(r.hs==null && a.hs!=null) r.hs=a.hs;
-      if(r.free_shares==null && a.free_shares!=null) r.free_shares=a.free_shares;
-      if(r.lb==null && a.lb!=null) r.lb=a.lb;
-      if(r.zf==null && a.zf!=null) r.zf=a.zf;
-      if(r.seal_amt==null && a.seal_amt!=null) r.seal_amt=a.seal_amt;   // ★ 封单额供资金评分（问达不支持，走东财补）
-      calcNld(r);   // ★ 补齐 free_shares 后立即重算 nld（否则要等 6s 轮询才出数，表现为「量能力度无数据」）
-      n++;
-    });
-    if(n){ wqStatus('问达 '+n+' 只已由东财问句补齐开盘换手Z/自由流通股本（昨日换手/量能力度可算）'); render(); }
+    var map={};
+    if(d&&d.code==='100'&&d.data&&d.data.result&&d.data.result.dataList&&d.data.result.dataList.length){
+      var cols=d.data.result.columns||[];
+      d.data.result.dataList.forEach(function(row){
+        var c=String(row.SECURITY_CODE||'').split('.')[0];
+        if(/^\d{6}$/.test(c)) map[c]=parseEastmoney(cols,row);
+      });
+    }
+    cb(map);
   }
   var body=JSON.stringify({keyWord:kw,pageSize:1000,pageNo:1,fingerprint:EM_FP,date:di});
   fetch(EM_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:body})
@@ -646,10 +637,38 @@ function enrichWendaFieldsViaEM(rows){
     .then(function(d){ if(d&&d.code==='100'&&d.data&&d.data.result&&d.data.result.dataList&&d.data.result.dataList.length) merge(d); else viaServer(); })
     .catch(function(){ viaServer(); });
   function viaServer(){
-    var cb='jjyl_wdem_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
+    var ck='jjyl_emc_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
     var url=(EM_ENDPOINT||(API_BASE+'/pq/em'))+'?keyWord='+encodeURIComponent(kw)+'&date='+encodeURIComponent(di)+'&fp='+EM_FP;
-    jsonp(url,cb,function(d){ merge(d); });
+    jsonp(url,ck,merge);
   }
+}
+// ★ 2026-11-27 阿里云 FC 主通道配套：FC 不返回 hs/free_shares，由东财问句补齐。
+// ★ 2026-11-28 改为两条独立问句：①全票补 hs/lb/zf/free_shares ②仅涨停票补 seal_amt（资金评分）。
+function enrichWendaFieldsViaEM(rows){
+  var need=(rows||[]).filter(function(r){ return r && (r.hs==null || r.free_shares==null || r.lb==null || r.zf==null || r.seal_amt==null); });
+  if(!need.length) return;
+  // ① 全票问句（不含封单金额）→ 昨日换手/量能力度依赖的自由流通股本在这里补
+  var needA=need.filter(function(r){ return r.hs==null || r.free_shares==null || r.lb==null || r.zf==null; });
+  if(needA.length) emByCode(needA,'开盘涨幅，开盘换手Z，开盘量比，自由流通股本',function(map){
+    var n=0;
+    needA.forEach(function(r){
+      var a=map[r.code]; if(!a) return;
+      if(r.hs==null && a.hs!=null) r.hs=a.hs;
+      if(r.free_shares==null && a.free_shares!=null) r.free_shares=a.free_shares;
+      if(r.lb==null && a.lb!=null) r.lb=a.lb;
+      if(r.zf==null && a.zf!=null) r.zf=a.zf;
+      calcNld(r);   // ★ 补到 free_shares 立即重算 nld（不等 6s 轮询）
+      n++;
+    });
+    if(n){ wqStatus('问达 '+n+' 只已由东财补齐开盘换手Z/自由流通股本（昨日换手/量能力度可算）'); render(); }
+  });
+  // ② 封单额独立问句（仅涨停票有值；非涨停缺失显示「—」，不编造）
+  var needB=need.filter(function(r){ return r.seal_amt==null; });
+  if(needB.length) emByCode(needB,'封单金额',function(map){
+    var n=0;
+    needB.forEach(function(r){ var a=map[r.code]; if(a && a.seal_amt!=null){ r.seal_amt=a.seal_amt; n++; } });
+    if(n){ wqStatus('问达 '+n+' 只已由东财补齐涨停封单额（资金评分封单组可算）'); render(); }
+  });
 }
 
 // 列定义：key/label/对齐/类型(num|str)/颜色类
@@ -1041,7 +1060,9 @@ var WQ_KEY='jjyl_wencai_queries';
 // 问财免token选股接口（浏览器直连，与 wcc.js 直拉模式一致，无服务器代理）
 var WENCAI_URL = "https://vis.10jqka.com.cn/clxg/default/insideapi/stockpick";
 // 竞价字段附加（与 auction.html / fetch_em_auction3 同口径：zb=竞价金额/昨日成交额×100；bl=今竞/昨竞）
-var AUCTION_FIELDS = "竞价涨幅，竞价量比，分时开盘价，竞价实际换手率，竞价金额，昨日成交额，今日竞价金额/昨日竞价金额大于0，竞价特大单净额，封单金额";
+// ★ 2026-11-28：封单金额从问财问句移除——资金评分的封单额与问达一样统一走东财按代码补数。
+//   问财「涨停封单额」在盘后/非涨停票会返回历史旧值，且问句混入「封单金额」会污染补数结果（东财只回涨停票）。
+var AUCTION_FIELDS = "竞价涨幅，竞价量比，分时开盘价，竞价实际换手率，竞价金额，昨日成交额，今日竞价金额/昨日竞价金额大于0，竞价特大单净额";
 
 // 解析问财原始 JSON → [{code,name,vals}]
 function parseWencaiRaw(d){
@@ -1105,10 +1126,9 @@ function parseAuction(vals){
   var zb = (jjje!=null && zje) ? Math.round(jjje/zje*100*10)/10 : null;
   var bl = wcMatch(vals, function(k){ return k.indexOf('竞价金额/昨日竞价金额')>=0 || (k.indexOf('{(}')>=0 && k.indexOf('竞价金额')>=0); });
   if(bl===null && zjj!=null && jjje!=null){ try{ bl = Math.round(jjje/zjj*10)/10; }catch(e){ bl=null; } }
-  // ★ 封单额：问财返回「涨停封单额」纯数字元，供资金评分封单组
-  var sealAmt = wcMatch(vals, function(k){ return k.indexOf('封单额')>=0 || k.indexOf('封单金额')>=0; });
+  // ★ 2026-11-28：封单额不再取问财问句（盘后/非涨停返回历史旧值），统一由东财按代码补数（与问达一致）
   return {lb: lb!=null?Math.round(lb*100)/100:null, hs: hs!=null?Math.round(hs*100)/100:null,
-          zb: zb, bl: bl!=null?Math.round(bl*10)/10:null, seal_amt:sealAmt};
+          zb: zb, bl: bl!=null?Math.round(bl*10)/10:null};
 }
 // 新浪资金流：浏览器直连 jsonp_v2.php（与「涨停接力-2.1.xls」同源），返回 r0~r3 入/出（元）
 function sinaFlowJsonp(codes, onDone){
@@ -1164,7 +1184,7 @@ function applyWencaiRows(base, wf, tag){
   base.forEach(function(b){
     if(ROWS.some(function(r){return r.code===b.code;})) return;
     var a = parseAuction(amap[b.code]||{});
-    var r={code:b.code, name:b.name||'…', price:null, zf:null, change_pct:null, hs:null, lb:null, zb:null, bl:null, kld:null, seal_amt:(a.seal_amt!=null?a.seal_amt:null),
+    var r={code:b.code, name:b.name||'…', price:null, zf:null, change_pct:null, hs:null, lb:null, zb:null, bl:null, kld:null, seal_amt:null,
            r0_in:null,r0_out:null,r1_in:null,r1_out:null,r2_in:null,r2_out:null,r3_in:null,r3_out:null,
            main_in:null, amount_wan:null, main_pct:null, turnover_pct:null, vol_ratio:null, manual:true};
     // 开盘涨幅% 不采用问财"竞价涨幅"（问财盘后返回历史旧值，非今日真实开盘），统一由腾讯 (今开-昨收)/昨收 实时计算
@@ -1174,43 +1194,34 @@ function applyWencaiRows(base, wf, tag){
     if(a.bl!=null) r.bl=a.bl;
     ROWS.push(r); curRows.push(r); added.push(r);
   });
-  wqStatus('问财返回 '+added.length+' 只'+(tag||'')+'（竞价指标已含开盘昨比/竞价昨比），正在补全实时行情与资金流…');
+  wqStatus('问财返回 '+added.length+' 只'+(tag||'')+'（竞价指标已含开盘昨比/竞价昨比），正在补全实时行情与资金流，封单额/自由流通股本由东财补齐…');
   fetchManual(added);
   render();
-  enrichWencaiFreeShares(added);   // ★ 量能力度 nld 需自由流通股本：问财问句无此字段，走东财按代码补数（不动问财竞价口径 hs/lb/zb/bl）
+  enrichWencaiFreeShares(added);   // ★ 东财两条独立问句：①自由流通股本→昨日换手/量能力度 ②涨停封单额→资金评分（与问达同源）
 }
-// ===== ★ 问财入口补自由流通股本（供量能力度 nld 使用；仅补 free_shares，不改问财口径 hs/lb/zb/bl）=====
-// 问财本身不带自由流通股本 → 用东财问句「代码含A或B…，自由流通股本」按代码批量补；
-// 补到后调 calcNld（day/query 已在 fetchManual 内缓存 _curFullVol/_preFullVol）。东财不可用则留「—」（数据不足，不编造）。
+// ===== ★ 问财入口东财补数（2026-11-28）=====
+// ①自由流通股本（全票返回）→ 昨日换手 kld / 量能力度 nld；
+// ②涨停封单额（仅涨停票返回）→ 资金评分封单组，与问达同源（不再取问财问句的封单金额）。
+// ★ 严禁把「封单金额」并入①：实测东财混合问句只回涨停票，非涨停票连自由流通股本都拿不到。
+// 只补缺失字段，不改问财口径 hs/lb/zb/bl；东财不可用则留「—」（数据不足，不编造）。
 function enrichWencaiFreeShares(rows){
   if(!rows||!rows.length) return;
-  var di=fmtDateLocal(new Date());
-  var kw='代码含'+rows.map(function(r){return r.code;}).join('或')+'，自由流通股本，封单金额';
-  function fillFree(d){
-    if(!d||d.code!=='100'||!d.data||!d.data.result||!d.data.result.dataList||!d.data.result.dataList.length) return;
-    var cols=d.data.result.columns||[], dl=d.data.result.dataList||{}, map={}, sealMap={};
-    dl.forEach(function(row){
-      var c=String(row.SECURITY_CODE||'').split('.')[0];
-      if(!/^\d{6}$/.test(c)) return;
-      for(var i=0;i<cols.length;i++){
-        var t=String(cols[i].title||'');
-        if(t.indexOf('自由流通股本')>=0){ var v=parseAmtShares(row[cols[i].key]); if(v>0) map[c]=v; }
-        if(t.indexOf('封单额')>=0||t.indexOf('封单金额')>=0){ var sv=parseAmtYuan(row[cols[i].key]); if(sv!=null) sealMap[c]=sv; }
-      }
+  // ① 全票问句：补自由流通股本（day/query 已缓存 _preFullVol/_curFullVol，补到即可算昨日换手/量能力度）
+  emByCode(rows,'自由流通股本',function(map){
+    var n=0;
+    rows.forEach(function(r){
+      var a=map[r.code];
+      if(a && a.free_shares>0){ r.free_shares=a.free_shares; calcNld(r); n++; }
     });
-    rows.forEach(function(r){ if(map[r.code]>0) r.free_shares=map[r.code]; if(r.seal_amt==null && sealMap[r.code]!=null) r.seal_amt=sealMap[r.code]; calcNld(r); });
-    render();
-  }
-  var body=JSON.stringify({keyWord:kw, pageSize:1000, pageNo:1, fingerprint:EM_FP, date:di});
-  fetch(EM_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:body})
-    .then(function(r){return r.json();})
-    .then(function(d){ if(d&&d.code==='100'&&d.data&&d.data.result&&d.data.result.dataList&&d.data.result.dataList.length) fillFree(d); else wfsViaServer(); })
-    .catch(function(){ wfsViaServer(); });
-  function wfsViaServer(){
-    var cb='jjyl_wfs_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
-    var url=(EM_ENDPOINT||(API_BASE+'/pq/em'))+'?keyWord='+encodeURIComponent(kw)+'&date='+encodeURIComponent(di)+'&fp='+EM_FP;
-    jsonp(url,cb,fillFree);
-  }
+    if(n){ wqStatus('问财 '+n+' 只已由东财补齐自由流通股本（昨日换手/量能力度可算）'); render(); }
+  });
+  // ② 封单额独立问句：与问达一样走东财，盘后/非涨停票无值则显示「—」
+  var needSeal=rows.filter(function(r){ return r.seal_amt==null; });
+  if(needSeal.length) emByCode(needSeal,'封单金额',function(map){
+    var n=0;
+    needSeal.forEach(function(r){ var a=map[r.code]; if(a && a.seal_amt!=null){ r.seal_amt=a.seal_amt; n++; } });
+    if(n){ wqStatus('问财 '+n+' 只已由东财补齐涨停封单额（资金评分封单组可算）'); render(); }
+  });
 }
 function runWencai(){
   var q=(document.getElementById('wencaiInput').value||'').trim();
