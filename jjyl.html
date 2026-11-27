@@ -618,9 +618,10 @@ function enrichWendaFieldsViaEM(rows){
       if(r.free_shares==null && a.free_shares!=null) r.free_shares=a.free_shares;
       if(r.lb==null && a.lb!=null) r.lb=a.lb;
       if(r.zf==null && a.zf!=null) r.zf=a.zf;
+      calcNld(r);   // ★ 补齐 free_shares 后立即重算 nld（否则要等 6s 轮询才出数，表现为「量能力度无数据」）
       n++;
     });
-    if(n){ wqStatus('问达 '+n+' 只已由东财问句补齐开盘换手Z/自由流通股本（昨日换手可算）'); render(); }
+    if(n){ wqStatus('问达 '+n+' 只已由东财问句补齐开盘换手Z/自由流通股本（昨日换手/量能力度可算）'); render(); }
   }
   var body=JSON.stringify({keyWord:kw,pageSize:1000,pageNo:1,fingerprint:EM_FP,date:di});
   fetch(EM_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:body})
@@ -901,6 +902,7 @@ function fetchManual(rows){
       if(!r.lockZf) r.change_pct=fnum(p[32]);
       r.amount_wan=fnum(p[37]); r.turnover_pct=fnum(p[38]); r.vol_ratio=fnum(p[49]);
       r._curFullVol=fnum(p[36]);   // 今累计量(手)，供量能力度 nld 用（p36/p49 实时口径）
+      calcNld(r);   // ★ 腾讯行情到位后立即重算 nld（与 day/query 回调、东财补齐三处互为兜底，任一后到都能出数）
       // 开盘涨幅% 统一用腾讯实时算的今日开盘涨幅=(今开sp5-昨收sp4)/昨收sp4×100（问财"竞价涨幅"盘后返回历史旧值，不可信）
       if(!r.lockZf && fnum(p[4]) && fnum(p[5])) r.zf=(fnum(p[5])-fnum(p[4]))/fnum(p[4])*100;
       // 开盘量比/换手：问财竞价口径优先（真实竞价时点，与 auction.html 同口径），缺失时回退腾讯全天量比/换手率(sp49/sp38)
