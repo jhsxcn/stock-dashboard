@@ -612,34 +612,54 @@ function applyWenda(d){
   enrichWendaFieldsViaEM(added);  // ★ 阿里云 FC 缺 hs/free_shares 时由东财问句补齐（昨日换手依赖）
   render();
 }
-// ★ 2026-11-28 关键修正：东财问句「封单金额」会把返回集限制为涨停票（实测 4 只仅回 2 只涨停），
-//   若与「自由流通股本」写在同一句，非涨停票整行不返回 ⇒ 昨日换手/量能力度全部无数据。
-//   因此拆成两条独立问句：①纯基础字段（全票返回）②封单金额（仅涨停票）。
-//   东财按代码补数通用函数：fields=纯字段名串（不含代码前缀），cb(map) 收到 {code: parseEastmoney结果}。
+// ★ 2026-11-28 东财按代码补数（两条实测铁律，缺一必失败）：
+//   ①「封单金额」会把返回集限制为涨停票 ⇒ 必须与「自由流通股本」拆成两条独立问句；
+//   ②代码数 >100 只时问句解析失败：接口仍回 code=100 / 1000 行，但 columns=[]（无任何字段列）
+//     ⇒ 必须分批（每批 ≤80）+ 校验 columns 含目标列，否则补数全空且表面“成功”。
+// fields=纯字段名串；cb(map) 收到 {code: parseEastmoney结果}，全部分批完成后一次性回调。
+var EM_FIELD_HINT={'自由流通股本':'自由流通股本','封单金额':'封单额','开盘涨幅':'竞价涨','开盘换手Z':'竞价换手','开盘量比':'竞价量比'};
 function emByCode(rows, fields, cb){
   if(!rows||!rows.length) return;
   var di=fmtDateLocal(new Date());
-  var kw='代码含'+rows.map(function(r){return r.code;}).join('或')+'，'+fields;
-  function merge(d){
-    var map={};
-    if(d&&d.code==='100'&&d.data&&d.data.result&&d.data.result.dataList&&d.data.result.dataList.length){
-      var cols=d.data.result.columns||[];
-      d.data.result.dataList.forEach(function(row){
-        var c=String(row.SECURITY_CODE||'').split('.')[0];
-        if(/^\d{6}$/.test(c)) map[c]=parseEastmoney(cols,row);
-      });
-    }
-    cb(map);
+  var hints=fields.split(/[，,]/).map(function(x){ return EM_FIELD_HINT[x.trim()]||x.trim(); }).filter(Boolean);
+  var BATCH=80, batches=[];
+  for(var i=0;i<rows.length;i+=BATCH) batches.push(rows.slice(i,i+BATCH));
+  var allMap={}, done=0;
+  batches.forEach(function(part,bi){
+    fetchBatch(part, bi, function(m){
+      Object.keys(m).forEach(function(k){ allMap[k]=m[k]; });
+      if(++done===batches.length) cb(allMap);
+    });
+  });
+  function valid(d){
+    if(!d||d.code!=='100'||!d.data||!d.data.result) return false;
+    var cols=d.data.result.columns||[], dl=d.data.result.dataList||[];
+    if(!dl.length||!cols.length) return false;
+    return cols.some(function(c){ var t=String(c.title||''); return hints.some(function(h){ return t.indexOf(h)>=0; }); });
   }
-  var body=JSON.stringify({keyWord:kw,pageSize:1000,pageNo:1,fingerprint:EM_FP,date:di});
-  fetch(EM_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:body})
-    .then(function(r){return r.json();})
-    .then(function(d){ if(d&&d.code==='100'&&d.data&&d.data.result&&d.data.result.dataList&&d.data.result.dataList.length) merge(d); else viaServer(); })
-    .catch(function(){ viaServer(); });
-  function viaServer(){
-    var ck='jjyl_emc_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
-    var url=(EM_ENDPOINT||(API_BASE+'/pq/em'))+'?keyWord='+encodeURIComponent(kw)+'&date='+encodeURIComponent(di)+'&fp='+EM_FP;
-    jsonp(url,ck,merge);
+  function fetchBatch(part, bi, doneCb){
+    var kw='代码含'+part.map(function(r){return r.code;}).join('或')+'，'+fields;
+    function merge(d){
+      var map={};
+      if(valid(d)){
+        var cols=d.data.result.columns||[];
+        d.data.result.dataList.forEach(function(row){
+          var c=String(row.SECURITY_CODE||'').split('.')[0];
+          if(/^\d{6}$/.test(c)) map[c]=parseEastmoney(cols,row);
+        });
+      }
+      doneCb(map);
+    }
+    var body=JSON.stringify({keyWord:kw,pageSize:1000,pageNo:1,fingerprint:EM_FP,date:di});
+    fetch(EM_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:body})
+      .then(function(r){return r.json();})
+      .then(function(d){ if(valid(d)) merge(d); else viaServer(); })
+      .catch(function(){ viaServer(); });
+    function viaServer(){
+      var ck='jjyl_emc_'+Date.now()+'_'+bi+'_'+Math.floor(Math.random()*1e6);
+      var url=(EM_ENDPOINT||(API_BASE+'/pq/em'))+'?keyWord='+encodeURIComponent(kw)+'&date='+encodeURIComponent(di)+'&fp='+EM_FP;
+      jsonp(url,ck,merge);
+    }
   }
 }
 // ★ 2026-11-27 阿里云 FC 主通道配套：FC 不返回 hs/free_shares，由东财问句补齐。
